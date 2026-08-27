@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_27_053617) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_27_063920) do
   create_table "memberships", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "project_id", null: false
@@ -20,6 +20,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_053617) do
     t.index ["project_id"], name: "index_memberships_on_project_id"
     t.index ["user_id", "project_id"], name: "index_memberships_on_user_id_and_project_id", unique: true
     t.index ["user_id"], name: "index_memberships_on_user_id"
+  end
+
+  create_table "milestones", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.date "due_on"
+    t.integer "project_id", null: false
+    t.string "state", default: "open", null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.index ["project_id", "due_on"], name: "index_milestones_on_project_id_and_due_on"
+    t.index ["project_id"], name: "index_milestones_on_project_id"
   end
 
   create_table "projects", force: :cascade do |t|
@@ -53,5 +65,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_053617) do
 
   add_foreign_key "memberships", "projects"
   add_foreign_key "memberships", "users"
+  add_foreign_key "milestones", "projects"
   add_foreign_key "sessions", "users"
 end

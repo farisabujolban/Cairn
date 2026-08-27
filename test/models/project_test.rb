@@ -74,6 +74,15 @@ class ProjectTest < ActiveSupport::TestCase
     end
   end
 
+  # A milestone is scoped to its project and has no meaning outside it. Left
+  # behind, it would be a dated bucket nobody can reach, still holding a
+  # project_id that no longer resolves.
+  test "destroying a project destroys its milestones" do
+    assert_difference -> { Milestone.count }, -3 do
+      projects(:apollo).destroy
+    end
+  end
+
   # Ownership transfer is the only sanctioned way past the one-owner rule: both
   # halves must happen together, or the project ends with two owners or none.
   test "transfer_ownership_to! promotes the new owner and demotes the old one" do
