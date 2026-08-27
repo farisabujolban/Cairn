@@ -20,8 +20,8 @@ of one project and a viewer of another.
 
 | Role | Can do |
 |---|---|
-| **Owner** | Everything, including deleting the project and handing ownership to someone else. One per project. |
-| **Admin** | Everything except deleting the project or transferring ownership. Can add and remove people. |
+| **Owner** | Everything, including handing the project on to someone else. One per project. |
+| **Admin** | Everything except handing the project on. Can add and remove people. |
 | **Member** | Create and change epics, stories, tasks and milestones. Cannot manage people. |
 | **Viewer** | Read everything. Change nothing. |
 
@@ -87,15 +87,24 @@ User.create!(
 )
 ```
 
-Putting that person on a project is also done from the console. Pick the project
-and the role you want them to have:
+Once the account exists, putting that person on a project is done in the app.
+Open the project, click **Members**, then **Add member**, and choose the person
+and the role you want them to have. The same screen changes somebody's role
+later, or removes them from the project.
 
-```ruby
-Project.find_by!(name: "Apollo").memberships.create!(
-  user: User.find_by!(email_address: "them@example.com"),
-  role: :member    # or :admin, :viewer
-)
-```
+Everyone on a project can see the member list — knowing who to ask about a piece
+of work is ordinary use. Only owners and admins can change it.
+
+## Handing a project to someone else
+
+A project has exactly one owner, and only the owner can pass it on. On the
+**Members** screen, set the person's role to **Owner**. They become the owner
+and you become an admin, in one step — the project is never left with two owners
+or none.
+
+This is the only way the owner changes. An owner cannot simply demote
+themselves, because that would leave a project nobody can transfer or delete,
+and an admin cannot demote the owner to take it from them.
 
 ## Versions, as installed
 
@@ -106,6 +115,7 @@ Project.find_by!(name: "Apollo").memberships.create!(
 | Database | SQLite 3.51.0 (all environments) |
 | Frontend | Hotwire (Turbo + Stimulus) over import maps — no Node build step |
 | CSS | Tailwind via `tailwindcss-rails` |
+| Authorization | Pundit — one policy class per model |
 | Tests | Minitest + fixtures, Capybara for system tests |
 
 ## Tests
