@@ -1,0 +1,6 @@
+<% content_for :title, "Edit #{@epic.title}" %>
+
+<div class="mx-auto max-w-3xl px-4 py-8">
+  <h1 class="text-2xl font-semibold text-slate-900">Edit epic</h1>
+  <%= render "form", project: @project, epic: @epic %>
+</div>

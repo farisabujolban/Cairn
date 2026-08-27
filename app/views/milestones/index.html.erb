@@ -1,0 +1,37 @@
+<% content_for :title, "#{@project.name} milestones" %>
+
+<div class="mx-auto max-w-3xl px-4 py-8">
+  <%= link_to "← #{@project.name}", project_path(@project), class: "text-sm text-slate-600 hover:underline" %>
+
+  <div class="mt-4 flex items-center justify-between gap-4">
+    <h1 class="text-2xl font-semibold text-slate-900">Milestones</h1>
+    <% if contributor? %>
+      <%= link_to "New milestone", new_project_milestone_path(@project),
+            class: "rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900" %>
+    <% end %>
+  </div>
+
+  <% if @milestones.any? %>
+    <ul class="mt-6 divide-y divide-slate-200 rounded-md border border-slate-200">
+      <% @milestones.each do |milestone| %>
+        <li class="flex items-baseline justify-between gap-4 p-4">
+          <div>
+            <%= link_to milestone.title, project_milestone_path(@project, milestone),
+                  class: "font-medium text-slate-900 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" %>
+            <% if milestone.description.present? %>
+              <p class="mt-1 text-sm text-slate-600"><%= milestone.description %></p>
+            <% end %>
+          </div>
+          <div class="shrink-0 text-right text-sm text-slate-600">
+            <p><%= milestone.due_on ? l(milestone.due_on, format: :long) : "No date" %></p>
+            <p class="mt-1 text-xs uppercase tracking-wide"><%= milestone.state %></p>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="mt-6 rounded-md border border-dashed border-slate-300 p-8 text-center text-slate-600">
+      This project has no milestones yet.
+    </p>
+  <% end %>
+</div>

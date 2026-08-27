@@ -1,0 +1,25 @@
+# Deliberately declared out of due-date order so an ordering test proves the
+# scope is sorting rather than returning insertion order.
+v2:
+  project: apollo
+  title: v1.2
+  description: The second ship date.
+  due_on: <%= 60.days.from_now.to_date.to_fs(:db) %>
+
+v1:
+  project: apollo
+  title: v1.1
+  description: The next ship date.
+  due_on: <%= 14.days.from_now.to_date.to_fs(:db) %>
+
+# A milestone without a date: real backlogs have "someday" buckets, and they
+# must not sort ahead of dated work.
+undated:
+  project: apollo
+  title: Someday
+
+# Lives in the other project so scoping tests have something to exclude.
+gemini_v1:
+  project: gemini
+  title: Gemini v1
+  due_on: <%= 30.days.from_now.to_date.to_fs(:db) %>
