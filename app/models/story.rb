@@ -6,6 +6,7 @@ class Story < ApplicationRecord
   belongs_to :epic
   belongs_to :milestone, optional: true
   belongs_to :assignee, class_name: "User", optional: true
+  has_many :tasks, dependent: :destroy
 
   # Reached through the epic rather than stored again: containment already
   # answers which project this is in, and a second copy could disagree with it.

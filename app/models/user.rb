@@ -6,6 +6,7 @@ class User < ApplicationRecord
   # Nullify, not destroy: removing a person must not delete the work they were
   # holding. It goes back to unassigned.
   has_many :assigned_stories, class_name: "Story", foreign_key: :assignee_id, dependent: :nullify, inverse_of: :assignee
+  has_many :assigned_tasks, class_name: "Task", foreign_key: :assignee_id, dependent: :nullify, inverse_of: :assignee
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
 

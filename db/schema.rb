@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_27_105846) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_27_110247) do
   create_table "epics", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
@@ -83,6 +83,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_105846) do
     t.index ["milestone_id"], name: "index_stories_on_milestone_id"
   end
 
+  create_table "tasks", force: :cascade do |t|
+    t.integer "assignee_id"
+    t.datetime "created_at", null: false
+    t.integer "position", null: false
+    t.string "status", default: "backlog", null: false
+    t.integer "story_id", null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assignee_id"], name: "index_tasks_on_assignee_id"
+    t.index ["story_id", "position"], name: "index_tasks_on_story_id_and_position"
+    t.index ["story_id"], name: "index_tasks_on_story_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email_address", null: false
@@ -102,4 +115,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_105846) do
   add_foreign_key "stories", "epics"
   add_foreign_key "stories", "milestones"
   add_foreign_key "stories", "users", column: "assignee_id"
+  add_foreign_key "tasks", "stories"
+  add_foreign_key "tasks", "users", column: "assignee_id"
 end
