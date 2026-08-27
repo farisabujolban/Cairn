@@ -1,7 +1,7 @@
 <% content_for :title, "Projects" %>
 
 <div class="mx-auto max-w-3xl px-4 py-8">
-  <div class="flex items-center justify-between gap-4">
+  <div class="flex flex-wrap items-center justify-between gap-4">
     <h1 class="text-2xl font-semibold text-slate-900">Projects</h1>
     <% if Current.user.system_admin? %>
       <%= link_to "New project", new_project_path,

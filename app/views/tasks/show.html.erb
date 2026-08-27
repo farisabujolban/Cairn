@@ -3,7 +3,7 @@
 <div class="mx-auto max-w-3xl px-4 py-8">
   <%= back_link_to "Tasks", project_story_tasks_path(@project, @story) %>
 
-  <div class="mt-4 flex items-center justify-between gap-4">
+  <div class="mt-4 flex flex-wrap items-center justify-between gap-4">
     <h1 class="text-2xl font-semibold text-slate-900"><%= @task.title %></h1>
     <div class="flex items-center gap-2">
       <%# Each control asks the policy for its own action rather than sharing one
