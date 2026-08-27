@@ -1,0 +1,37 @@
+<%= form_with model: [ project, epic ], class: "mt-6 space-y-4" do |form| %>
+  <% if epic.errors.any? %>
+    <div class="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-800">
+      <h2><%= pluralize(epic.errors.count, "error") %> prevented this epic from being saved:</h2>
+      <ul class="mt-2 list-disc pl-5">
+        <% epic.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= form.label :title, class: "block text-sm font-medium text-slate-900" %>
+    <%= form.text_field :title, class: "mt-1 block w-full rounded-md border border-slate-300 px-3 py-2" %>
+  </div>
+
+  <div>
+    <%= form.label :description, class: "block text-sm font-medium text-slate-900" %>
+    <%= form.text_area :description, rows: 4, class: "mt-1 block w-full rounded-md border border-slate-300 px-3 py-2" %>
+  </div>
+
+  <div>
+    <%= form.label :status, class: "block text-sm font-medium text-slate-900" %>
+    <%= form.select :status, Epic::STATUSES.map { |status| [ status.titleize, status ] },
+          {}, class: "mt-1 block rounded-md border border-slate-300 px-3 py-2" %>
+  </div>
+
+  <div>
+    <%= form.label :milestone_id, "Milestone", class: "block text-sm font-medium text-slate-900" %>
+    <%# Only this project's milestones are offered; the model rejects any other. %>
+    <%= form.collection_select :milestone_id, project.milestones.by_due_date, :id, :title,
+          { include_blank: "Unscheduled" }, class: "mt-1 block rounded-md border border-slate-300 px-3 py-2" %>
+  </div>
+
+  <%= form.submit class: "rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700" %>
+<% end %>

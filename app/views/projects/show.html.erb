@@ -12,6 +12,8 @@
   <p class="mt-2 text-slate-600"><%= @project.description %></p>
 
   <nav class="mt-6 flex gap-3 border-t border-slate-200 pt-6 text-sm">
+    <%= link_to "Epics", project_epics_path(@project),
+          class: "rounded-md border border-slate-300 px-3 py-2 font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" %>
     <%= link_to "Milestones", project_milestones_path(@project),
           class: "rounded-md border border-slate-300 px-3 py-2 font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" %>
   </nav>

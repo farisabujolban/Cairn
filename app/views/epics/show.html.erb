@@ -1,0 +1,37 @@
+<% content_for :title, @epic.title %>
+
+<div class="mx-auto max-w-3xl px-4 py-8">
+  <%= link_to "← Epics", project_epics_path(@project), class: "text-sm text-slate-600 hover:underline" %>
+
+  <div class="mt-4 flex items-center justify-between gap-4">
+    <h1 class="text-2xl font-semibold text-slate-900"><%= @epic.title %></h1>
+    <% if contributor? %>
+      <div class="flex items-center gap-2">
+        <%= link_to "Edit", edit_project_epic_path(@project, @epic),
+              class: "rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+        <%= button_to "Delete", project_epic_path(@project, @epic), method: :delete,
+              form: { data: { turbo_confirm: "Delete this epic?" } },
+              class: "rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+      </div>
+    <% end %>
+  </div>
+
+  <dl class="mt-4 flex gap-6 text-sm text-slate-600">
+    <div>
+      <dt class="font-medium text-slate-900">Status</dt>
+      <dd><%= @epic.status.titleize %></dd>
+    </div>
+    <div>
+      <dt class="font-medium text-slate-900">Milestone</dt>
+      <dd>
+        <% if @epic.milestone %>
+          <%= link_to @epic.milestone.title, project_milestone_path(@project, @epic.milestone), class: "hover:underline" %>
+        <% else %>
+          Unscheduled
+        <% end %>
+      </dd>
+    </div>
+  </dl>
+
+  <p class="mt-4 text-slate-600"><%= @epic.description %></p>
+</div>
