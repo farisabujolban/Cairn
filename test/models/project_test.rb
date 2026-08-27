@@ -43,6 +43,47 @@ class ProjectTest < ActiveSupport::TestCase
     end
   end
 
+  # The form has no slug field, so a derived slug's errors name something the
+  # user cannot see or correct. They are re-pointed at the name they came from.
+  test "reports a taken derived slug against the name" do
+    Project.create!(name: "Apollo Redesign")
+    duplicate = Project.new(name: "Apollo Redesign")
+
+    assert_not duplicate.valid?
+    assert_includes duplicate.errors[:name], "has already been taken"
+    assert_empty duplicate.errors[:slug]
+  end
+
+  # A name of pure punctuation parameterizes to "", so the slug is blank while
+  # the name is not. Reporting "can't be blank" there would name the wrong field.
+  test "reports a name that cannot produce a slug against the name" do
+    project = Project.new(name: "!!!")
+
+    assert_not project.valid?
+    assert_includes project.errors[:name], "must contain at least one letter or number"
+    assert_empty project.errors[:slug]
+  end
+
+  # A blank name already reports itself; the blank derived slug that follows adds
+  # a second message for one mistake.
+  test "reports a blank name once rather than twice" do
+    project = Project.new(name: "")
+
+    assert_not project.valid?
+    assert_equal [ "can't be blank" ], project.errors[:name]
+    assert_empty project.errors[:slug]
+  end
+
+  # An explicitly supplied slug is a field the caller chose, so its errors stay
+  # on slug rather than being blamed on the name.
+  test "keeps errors on an explicitly supplied slug" do
+    project = Project.new(name: "Fine Name", slug: "UPPER")
+
+    assert_not project.valid?
+    assert_includes project.errors[:slug], "must be lowercase letters, numbers and hyphens"
+    assert_empty project.errors[:name]
+  end
+
   # Records are addressed by id. The spec lists slug as a unique column without
   # making it the URL identifier, so to_param stays Rails' default — pinned here
   # because overriding it silently rewrites every path helper in the app.

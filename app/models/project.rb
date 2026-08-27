@@ -9,6 +9,7 @@ class Project < ApplicationRecord
   normalizes :name, with: ->(n) { n.strip }
 
   before_validation :derive_slug_from_name, on: :create
+  after_validation :report_derived_slug_errors_on_name
 
   validates :name, presence: true
   validates :slug, presence: true, uniqueness: true,
@@ -37,6 +38,28 @@ class Project < ApplicationRecord
 
   private
     def derive_slug_from_name
-      self.slug = name.to_s.parameterize if slug.blank?
+      return if slug.present?
+
+      self.slug = name.to_s.parameterize
+      @slug_derived = true
+    end
+
+    # A derived slug is never a field on the form, so an error on it names
+    # something the user cannot see or correct. Re-point those messages at the
+    # name they were derived from.
+    def report_derived_slug_errors_on_name
+      return unless @slug_derived
+      return if errors[:slug].empty?
+
+      taken = errors[:slug].any? { |message| message.include?("taken") }
+      errors.delete(:slug)
+
+      if taken
+        errors.add(:name, "has already been taken")
+      elsif name.present?
+        # "!!!" parameterizes to "", leaving the slug blank while the name is not.
+        errors.add(:name, "must contain at least one letter or number")
+      end
+      # A blank name already reports itself; the blank slug that follows it adds nothing.
     end
 end
