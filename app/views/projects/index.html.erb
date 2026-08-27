@@ -5,7 +5,7 @@
     <h1 class="text-2xl font-semibold text-slate-900">Projects</h1>
     <% if Current.user.system_admin? %>
       <%= link_to "New project", new_project_path,
-            class: "rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900" %>
+            class: "rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900" %>
     <% end %>
   </div>
 
@@ -14,7 +14,7 @@
       <% @projects.each do |project| %>
         <li class="relative p-4 first:rounded-t-md last:rounded-b-md transition-colors hover:bg-slate-50 hover:inset-ring-1 hover:inset-ring-slate-300 focus-within:bg-slate-50 focus-within:inset-ring-2 focus-within:inset-ring-slate-900">
           <%# The title carries a full-card overlay so the whole row is one click target. %>
-          <%= link_to project.name, project, class: "font-medium text-slate-900 after:absolute after:inset-0 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" %>
+          <%= link_to project.name, project, class: "font-medium text-slate-900 after:absolute after:inset-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" %>
           <% if project.description.present? %>
             <p class="mt-1 text-sm text-slate-600"><%= project.description %></p>
           <% end %>

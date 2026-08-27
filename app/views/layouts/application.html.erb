@@ -27,11 +27,11 @@
     <% if authenticated? %>
       <header class="border-b border-slate-200 bg-white">
         <nav class="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-3">
-          <%= link_to "Project Tracker", root_path, class: "font-semibold text-slate-900 hover:underline" %>
+          <%= link_to "Project Tracker", root_path, class: "font-semibold text-slate-900" %>
           <div class="flex items-center gap-3 text-sm text-slate-600">
             <span><%= Current.user.name %></span>
             <%= button_to "Sign out", session_path, method: :delete,
-                  class: "cursor-pointer rounded-md border border-slate-300 px-2 py-1 hover:bg-slate-100 hover:border-slate-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900" %>
+                  class: "cursor-pointer rounded-md border border-slate-300 px-2 py-1 transition-colors hover:bg-slate-100 hover:border-slate-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900" %>
           </div>
         </nav>
       </header>
