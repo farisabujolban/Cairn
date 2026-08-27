@@ -1,0 +1,45 @@
+<% content_for :title, "Add a member to #{@project.name}" %>
+
+<div class="mx-auto max-w-3xl px-4 py-8">
+  <%= back_link_to "Members", project_memberships_path(@project) %>
+
+  <h1 class="mt-4 text-2xl font-semibold text-slate-900">Add a member</h1>
+
+  <%= form_with model: [ @project, @membership ], class: "mt-6 space-y-4" do |form| %>
+    <% if @membership.errors.any? %>
+      <div class="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-800">
+        <ul class="list-inside list-disc">
+          <% @membership.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div>
+      <%= form.label :user_id, "Person", class: "block text-sm font-medium text-slate-900" %>
+      <%# Only people who are not on the project yet: offering an existing member
+          could only fail the uniqueness rule on the user/project pair. %>
+      <%= form.collection_select :user_id, @candidates, :id, :name,
+            { prompt: "Choose a person" },
+            class: "mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900" %>
+    </div>
+
+    <div>
+      <%= form.label :role, class: "block text-sm font-medium text-slate-900" %>
+      <%# The policy's list, not the enum's: owner is absent here because a
+          project's owner is set at creation and moved by transfer. %>
+      <%= form.select :role,
+            policy(@membership).assignable_roles.map { |role| [ role.titleize, role ] },
+            { prompt: "Choose a role" },
+            class: "mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900" %>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-3">
+      <%= form.submit "Add member",
+            class: "cursor-pointer rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900" %>
+      <%= link_to "Cancel", project_memberships_path(@project),
+            class: "text-sm text-slate-600 transition-colors hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" %>
+    </div>
+  <% end %>
+</div>

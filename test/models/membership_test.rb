@@ -77,4 +77,22 @@ class MembershipTest < ActiveSupport::TestCase
       assert memberships(:apollo_viewer).destroy
     end
   end
+  # The member list reads as a hierarchy, so it has to sort as one. Ordering by
+  # the role column directly sorts alphabetically — admin, member, owner, viewer
+  # — which puts the owner third and reads as noise.
+  test "by_role sorts most privileged first, then by name" do
+    roles = projects(:apollo).memberships.by_role.map(&:role)
+
+    assert_equal %w[ owner admin member viewer ], roles
+  end
+
+  # Two people in the same role is the common case, and an arbitrary order
+  # within a role makes the list shuffle between page loads.
+  test "by_role breaks ties on the member's name" do
+    projects(:apollo).memberships.create!(user: users(:admin), role: :member)
+
+    names = projects(:apollo).memberships.by_role.select(&:member?).map { |m| m.user.name }
+
+    assert_equal names.sort, names
+  end
 end

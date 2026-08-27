@@ -19,6 +19,20 @@ class Membership < ApplicationRecord
 
   before_destroy :refuse_to_remove_last_owner
 
+  # ROLES is ordered by privilege, so the position in it is the sort key. The
+  # column stores strings, and ordering on those directly gives admin, member,
+  # owner, viewer — the owner third, which reads as noise rather than hierarchy.
+  #
+  # Built from the frozen ROLES constant, never from input, and plain SQL CASE
+  # rather than anything SQLite-specific, so the Postgres swap in §2 stays open.
+  ROLE_RANK = ROLES.each_with_index.map { |role, rank| "WHEN '#{role}' THEN #{rank}" }.join(" ").freeze
+
+  scope :by_role, -> {
+    joins(:user)
+      .order(Arel.sql("CASE memberships.role #{ROLE_RANK} ELSE #{ROLES.size} END"))
+      .merge(User.order(:name))
+  }
+
   private
     def owner_must_be_unique_within_project
       return unless owner? && project_id?
