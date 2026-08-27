@@ -1,9 +1,9 @@
 class Story < ApplicationRecord
   include WorkItemStatus
+  include Assignable
 
   belongs_to :epic
   belongs_to :milestone, optional: true
-  belongs_to :assignee, class_name: "User", optional: true
   has_many :tasks, dependent: :destroy
 
   # Reached through the epic rather than stored again: containment already
@@ -17,7 +17,6 @@ class Story < ApplicationRecord
   validates :title, presence: true
   validates :position, presence: true
   validate :milestone_must_belong_to_the_same_project
-  validate :assignee_must_be_a_project_member
 
   scope :ordered, -> { order(:position, :id) }
 
@@ -34,14 +33,5 @@ class Story < ApplicationRecord
       return if milestone.nil? || milestone.project_id == project&.id
 
       errors.add(:milestone, "must belong to the same project")
-    end
-
-    # Assignment follows membership: handing work to a non-member would print
-    # their name on a project page they cannot open.
-    def assignee_must_be_a_project_member
-      return if assignee.nil? || project.nil?
-      return if project.memberships.exists?(user_id: assignee.id)
-
-      errors.add(:assignee, "must be a member of this project")
     end
 end
