@@ -1,0 +1,19 @@
+<% password_digest = BCrypt::Password.create("password") %>
+
+# A system admin exists in every test run because sign-up is disabled: without
+# one, no fixture-based test could create the first user or project.
+admin:
+  name: Ada Admin
+  email_address: admin@example.com
+  password_digest: <%= password_digest %>
+  system_admin: true
+
+one:
+  name: One Member
+  email_address: one@example.com
+  password_digest: <%= password_digest %>
+
+two:
+  name: Two Member
+  email_address: two@example.com
+  password_digest: <%= password_digest %>

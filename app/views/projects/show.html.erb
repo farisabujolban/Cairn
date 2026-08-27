@@ -1,0 +1,13 @@
+<% content_for :title, @project.name %>
+
+<div class="mx-auto max-w-3xl px-4 py-8">
+  <%= link_to "← All projects", projects_path, class: "text-sm text-slate-600 hover:underline" %>
+
+  <div class="mt-4 flex items-center justify-between gap-4">
+    <h1 class="text-2xl font-semibold text-slate-900"><%= @project.name %></h1>
+    <%= link_to "Edit", edit_project_path(@project),
+          class: "rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+  </div>
+
+  <p class="mt-2 text-slate-600"><%= @project.description %></p>
+</div>

@@ -1,0 +1,16 @@
+apollo:
+  name: Apollo
+  slug: apollo
+  description: The main project used across tests.
+
+gemini:
+  name: Gemini
+  slug: gemini
+  description: A second project, used to prove roles do not leak between projects.
+
+# Archived projects still exist and are still readable; they only drop out of the
+# default listing. Kept as a fixture so scope tests have something to exclude.
+archived:
+  name: Mercury
+  slug: mercury
+  archived_at: <%= 3.days.ago.to_fs(:db) %>
