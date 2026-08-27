@@ -43,10 +43,12 @@ class ProjectTest < ActiveSupport::TestCase
     end
   end
 
-  # URLs are built from the slug, so to_param must not fall back to the id —
-  # otherwise half the links in the app would be numeric and half readable.
-  test "to_param returns the slug rather than the id" do
-    assert_equal "apollo", projects(:apollo).to_param
+  # Records are addressed by id. The spec lists slug as a unique column without
+  # making it the URL identifier, so to_param stays Rails' default — pinned here
+  # because overriding it silently rewrites every path helper in the app.
+  test "to_param returns the id, leaving slug as a plain unique attribute" do
+    project = projects(:apollo)
+    assert_equal project.id.to_s, project.to_param
   end
 
   # Archiving is a soft delete: the project keeps its rows but must drop out of

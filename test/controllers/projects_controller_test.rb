@@ -51,12 +51,12 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
-  # A slug that matches nothing and a slug the user may not see must be
+  # An id that matches nothing and an id the user may not see must be
   # indistinguishable, or the difference becomes an existence oracle.
-  test "show returns 404 for a slug that does not exist" do
+  test "show returns 404 for an id that does not exist" do
     sign_in_as users(:one)
 
-    get project_url(id: "no-such-project")
+    get project_url(id: 0)
 
     assert_response :not_found
   end

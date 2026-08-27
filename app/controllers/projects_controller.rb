@@ -44,7 +44,7 @@ class ProjectsController < ApplicationController
     # Scoped through the current user's memberships, so a project they are not in
     # raises RecordNotFound and renders 404 — a non-member never learns it exists.
     def set_project
-      @project = Project.visible_to(Current.user).find_by!(slug: params[:id])
+      @project = Project.visible_to(Current.user).find(params[:id])
     end
 
     def current_membership

@@ -19,8 +19,6 @@ class Project < ApplicationRecord
   scope :active, -> { where(archived_at: nil) }
   scope :archived, -> { where.not(archived_at: nil) }
 
-  def to_param = slug
-
   def archived? = archived_at.present?
 
   # The only sanctioned way past the one-owner rule. Both halves run in one
