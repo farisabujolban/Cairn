@@ -15,7 +15,7 @@
     <ul class="mt-6 divide-y divide-slate-200 rounded-md border border-slate-200 bg-white">
       <% @milestones.each do |milestone| %>
         <li class="relative flex items-baseline justify-between gap-4 p-4 first:rounded-t-md last:rounded-b-md transition-colors hover:bg-slate-50 hover:inset-ring-1 hover:inset-ring-slate-300 focus-within:bg-slate-50 focus-within:inset-ring-2 focus-within:inset-ring-slate-900">
-          <div class="min-w-0 flex-1">
+          <div class="min-w-0 flex-1 break-words">
             <%# The title carries a full-card overlay so the whole row is one click target. %>
             <%= link_to milestone.title, project_milestone_path(@project, milestone),
                   class: "font-medium text-slate-900 after:absolute after:inset-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" %>
