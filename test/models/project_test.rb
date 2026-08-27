@@ -110,8 +110,13 @@ class ProjectTest < ActiveSupport::TestCase
   # point at a project id that no longer resolves, which authorization code
   # would have to defend against forever.
   test "destroying a project destroys its memberships" do
-    assert_difference -> { Membership.count }, -2 do
-      projects(:apollo).destroy
+    project = projects(:apollo)
+
+    # Counted from the project rather than hardcoded: Apollo gains members as
+    # the role fixtures grow, and the claim is "all of its own and none of
+    # anyone else's", not "two".
+    assert_difference -> { Membership.count }, -project.memberships.count do
+      project.destroy
     end
   end
 

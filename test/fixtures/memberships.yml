@@ -20,3 +20,15 @@ gemini_member:
   user: one
   project: gemini
   role: member
+
+# Apollo holds one user per role so a policy test can walk the §4 matrix a
+# column at a time without building memberships by hand.
+apollo_admin:
+  user: three
+  project: apollo
+  role: admin
+
+apollo_member:
+  user: four
+  project: apollo
+  role: member
