@@ -1,7 +1,5 @@
 class Story < ApplicationRecord
-  # The same vocabulary Epic uses; Task joins it below. Extracted into a shared
-  # concern once all three levels exist.
-  STATUSES = Epic::STATUSES
+  include WorkItemStatus
 
   belongs_to :epic
   belongs_to :milestone, optional: true
@@ -12,14 +10,11 @@ class Story < ApplicationRecord
   # answers which project this is in, and a second copy could disagree with it.
   delegate :project, to: :epic, allow_nil: true
 
-  enum :status, STATUSES.index_by(&:itself), validate: { allow_nil: true }
-
   normalizes :title, with: ->(t) { t.strip }
 
   before_validation :append_to_epic, on: :create
 
   validates :title, presence: true
-  validates :status, presence: true
   validates :position, presence: true
   validate :milestone_must_belong_to_the_same_project
   validate :assignee_must_be_a_project_member

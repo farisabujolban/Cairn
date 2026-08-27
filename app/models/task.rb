@@ -1,7 +1,5 @@
 class Task < ApplicationRecord
-  # The third and last level to share the one vocabulary. Extracted into a
-  # concern below once all three models existed to share it.
-  STATUSES = Epic::STATUSES
+  include WorkItemStatus
 
   # A Task is a leaf. There is no has_many here, no parent_id on the table, and
   # no self-referential association — see §6. If a task needs children, the work
@@ -11,14 +9,11 @@ class Task < ApplicationRecord
 
   delegate :project, to: :story, allow_nil: true
 
-  enum :status, STATUSES.index_by(&:itself), validate: { allow_nil: true }
-
   normalizes :title, with: ->(t) { t.strip }
 
   before_validation :append_to_story, on: :create
 
   validates :title, presence: true
-  validates :status, presence: true
   validates :position, presence: true
   validate :assignee_must_be_a_project_member
 
