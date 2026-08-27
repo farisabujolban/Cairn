@@ -1,10 +1,15 @@
 class Story < ApplicationRecord
   include WorkItemStatus
+  include Progressing
   include Assignable
 
   belongs_to :epic
   belongs_to :milestone, optional: true
   has_many :tasks, dependent: :destroy
+
+  # Done tasks over total tasks. A story at 100% is still only done when someone
+  # says so: §3 rules out rollup in v1.
+  progress_over :tasks
 
   # Reached through the epic rather than stored again: containment already
   # answers which project this is in, and a second copy could disagree with it.

@@ -105,6 +105,23 @@ class StoryTest < ActiveSupport::TestCase
     assert_equal [ stories(:countdown), stories(:abort_switch) ], epics(:launch).stories.ordered.to_a
   end
 
+  # §3's progress helper one level down: done tasks over total tasks. A story
+  # whose tasks are all done does not itself become done — §3 rules out rollup —
+  # so the bar can read 100% while the status still says in progress.
+  test "progress counts its done tasks against all of them" do
+    story = stories(:countdown)
+    assert_equal Progress.new(done: 0, total: 2), story.progress
+
+    story.tasks.each(&:done!)
+
+    assert_equal 100, story.reload.progress.percent
+    assert_not story.done?
+  end
+
+  test "progress on a story with no tasks is empty" do
+    assert_not stories(:telemetry_feed).progress.any?
+  end
+
   # A story cannot outlive its epic: orphan rows would accumulate that no screen
   # can reach, and no membership scope guards.
   test "destroying an epic destroys its stories" do

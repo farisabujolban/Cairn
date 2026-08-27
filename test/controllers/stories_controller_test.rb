@@ -243,4 +243,17 @@ class StoriesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :not_found
   end
+  # The same bar one level down, over tasks. A story can read 100% and still not
+  # be done — §3 rules out rollup — so the bar and the status are separate
+  # readings of the same row.
+  test "show reports how many of the story's tasks are done" do
+    sign_in_as users(:one)
+    tasks(:wire_the_clock).done!
+
+    get project_story_url(projects(:apollo), stories(:countdown))
+
+    assert_select "[role=progressbar][aria-valuenow=?]", "50"
+    assert_select "p", text: "1 of 2 tasks done"
+    assert_select "dd", text: "Backlog"
+  end
 end

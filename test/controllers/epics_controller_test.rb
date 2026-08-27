@@ -217,4 +217,15 @@ class EpicsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :not_found
   end
+  # §3's progress bar, deferred out of Phase 2 because Epic#progress counts
+  # stories and there were none to count.
+  test "show reports how many of the epic's stories are done" do
+    sign_in_as users(:one)
+    stories(:countdown).done!
+
+    get project_epic_url(projects(:apollo), epics(:launch))
+
+    assert_select "[role=progressbar][aria-valuenow=?]", "50"
+    assert_select "p", text: "1 of 2 stories done"
+  end
 end

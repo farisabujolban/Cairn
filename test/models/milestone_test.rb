@@ -70,4 +70,28 @@ class MilestoneTest < ActiveSupport::TestCase
 
     assert_nil epics(:launch).reload.milestone_id
   end
+  # What the milestone list shows: how much of the work promised for this date
+  # is finished. Stories are the unit counted because that is what "how much of
+  # v1.1 is done" means to the person reading the list.
+  #
+  # Two routes reach a milestone — a story scheduled against it directly, and a
+  # story inside an epic scheduled against it — and a story taking both must be
+  # counted once, not twice.
+  test "progress counts the stories scheduled against it, directly or through an epic" do
+    milestone = milestones(:v1)
+
+    # launch (the epic) is on v1 and holds two stories, one of which — countdown —
+    # is also scheduled against v1 in its own right.
+    assert_equal Progress.new(done: 0, total: 2), milestone.progress
+
+    stories(:countdown).done!
+
+    assert_equal Progress.new(done: 1, total: 2), milestone.reload.progress
+  end
+
+  # A date nobody has planned work against yet reports empty rather than
+  # dividing by zero, exactly as an epic with no stories does.
+  test "progress on a milestone with nothing scheduled is empty" do
+    assert_not milestones(:undated).progress.any?
+  end
 end

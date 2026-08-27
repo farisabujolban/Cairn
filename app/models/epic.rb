@@ -1,9 +1,14 @@
 class Epic < ApplicationRecord
   include WorkItemStatus
+  include Progressing
 
   belongs_to :project
   belongs_to :milestone, optional: true
   has_many :stories, dependent: :destroy
+
+  # §3's progress bar: done stories over total stories. Status stays manual at
+  # every level, so this reports what people set rather than rolling anything up.
+  progress_over :stories
 
   normalizes :title, with: ->(t) { t.strip }
 

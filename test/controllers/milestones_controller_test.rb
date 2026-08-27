@@ -181,4 +181,27 @@ class MilestonesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :not_found
   end
+  # §7's milestone list with progress. It could not be written before stories
+  # existed, because "how much of v1.1 is done" counts stories — the epics
+  # scheduled against the date and the stories scheduled against it directly.
+  test "index shows how much of each milestone's work is done" do
+    sign_in_as users(:one)
+    stories(:countdown).done!
+
+    get project_milestones_url(projects(:apollo))
+
+    assert_response :success
+    assert_select "[role=progressbar][aria-valuenow=?]", "50"
+    assert_select "p", text: "1 of 2 stories done"
+  end
+
+  # A date with nothing planned against it says so, rather than drawing an empty
+  # bar that reads as "none of this is finished".
+  test "index says so when a milestone has nothing scheduled" do
+    sign_in_as users(:one)
+
+    get project_milestones_url(projects(:apollo))
+
+    assert_select "p", text: "No stories scheduled"
+  end
 end

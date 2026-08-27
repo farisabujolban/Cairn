@@ -43,6 +43,8 @@
 
   <p class="mt-4 text-slate-600"><%= @story.description %></p>
 
+  <%= render "shared/progress", progress: @story.progress, unit: "tasks" %>
+
   <nav class="mt-6 flex gap-3 border-t border-slate-200 pt-6 text-sm">
     <%# The only way into this story's tasks: containment is the navigation. %>
     <%= link_to project_story_tasks_path(@project, @story),

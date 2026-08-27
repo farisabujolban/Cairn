@@ -27,5 +27,7 @@
     </div>
   </dl>
 
+  <%= render "shared/progress", progress: @milestone.progress, unit: "stories", empty: "No stories scheduled" %>
+
   <p class="mt-4 text-slate-600"><%= @milestone.description %></p>
 </div>
