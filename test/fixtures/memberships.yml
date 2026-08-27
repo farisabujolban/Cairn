@@ -1,0 +1,22 @@
+# One (owner of Apollo) and Two (viewer of Apollo, owner of Gemini) exist so that
+# tests can prove a role in one project grants nothing in another. The admin user
+# is deliberately a member of no project: system_admin must not imply access.
+apollo_owner:
+  user: one
+  project: apollo
+  role: owner
+
+apollo_viewer:
+  user: two
+  project: apollo
+  role: viewer
+
+gemini_owner:
+  user: two
+  project: gemini
+  role: owner
+
+gemini_member:
+  user: one
+  project: gemini
+  role: member

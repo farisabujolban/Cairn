@@ -1,0 +1,28 @@
+<% content_for :title, "Projects" %>
+
+<div class="mx-auto max-w-3xl px-4 py-8">
+  <div class="flex items-center justify-between gap-4">
+    <h1 class="text-2xl font-semibold text-slate-900">Projects</h1>
+    <% if Current.user.system_admin? %>
+      <%= link_to "New project", new_project_path,
+            class: "rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900" %>
+    <% end %>
+  </div>
+
+  <% if @projects.any? %>
+    <ul class="mt-6 divide-y divide-slate-200 rounded-md border border-slate-200">
+      <% @projects.each do |project| %>
+        <li class="p-4">
+          <%= link_to project.name, project, class: "font-medium text-slate-900 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" %>
+          <% if project.description.present? %>
+            <p class="mt-1 text-sm text-slate-600"><%= project.description %></p>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="mt-6 rounded-md border border-dashed border-slate-300 p-8 text-center text-slate-600">
+      You are not a member of any project yet.
+    </p>
+  <% end %>
+</div>

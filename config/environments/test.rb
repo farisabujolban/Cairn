@@ -22,6 +22,11 @@ Rails.application.configure do
   config.consider_all_requests_local = true
   config.cache_store = :null_store
 
+  # Rate limiting is backed by a cache store, so a null store would make
+  # `rate_limit` silently do nothing — including in the test that proves the
+  # sign-in form is throttled. General caching stays disabled above.
+  config.action_controller.cache_store = :memory_store
+
   # Render exception templates for rescuable exceptions and raise for other exceptions.
   config.action_dispatch.show_exceptions = :rescuable
 
