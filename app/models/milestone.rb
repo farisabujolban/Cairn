@@ -7,6 +7,9 @@ class Milestone < ApplicationRecord
   # Nullify, not destroy: a cancelled or renamed ship date must not take the
   # work planned against it with it. The epic survives, unscheduled.
   has_many :epics, dependent: :nullify
+  # Stories reference a milestone directly too: the scheduling axis reaches both
+  # levels, and losing the date must not lose the story either.
+  has_many :stories, dependent: :nullify
 
   enum :state, STATES.index_by(&:itself), validate: { allow_nil: true }
 

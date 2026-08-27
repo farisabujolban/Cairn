@@ -1,10 +1,11 @@
 class Epic < ApplicationRecord
   # One status vocabulary across every work-item level, ordered from unsorted to
-  # finished. Story and Task join this in Phase 3.
+  # finished. Story and Task share it.
   STATUSES = %w[ backlog todo in_progress blocked done ].freeze
 
   belongs_to :project
   belongs_to :milestone, optional: true
+  has_many :stories, dependent: :destroy
 
   enum :status, STATUSES.index_by(&:itself), validate: { allow_nil: true }
 
