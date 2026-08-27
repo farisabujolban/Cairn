@@ -1,0 +1,31 @@
+<% content_for :title, @milestone.title %>
+
+<div class="mx-auto max-w-3xl px-4 py-8">
+  <%= link_to "← Milestones", project_milestones_path(@project), class: "text-sm text-slate-600 hover:underline" %>
+
+  <div class="mt-4 flex items-center justify-between gap-4">
+    <h1 class="text-2xl font-semibold text-slate-900"><%= @milestone.title %></h1>
+    <% if contributor? %>
+      <div class="flex items-center gap-2">
+        <%= link_to "Edit", edit_project_milestone_path(@project, @milestone),
+              class: "rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+        <%= button_to "Delete", project_milestone_path(@project, @milestone), method: :delete,
+              form: { data: { turbo_confirm: "Delete this milestone?" } },
+              class: "rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+      </div>
+    <% end %>
+  </div>
+
+  <dl class="mt-4 flex gap-6 text-sm text-slate-600">
+    <div>
+      <dt class="font-medium text-slate-900">Due</dt>
+      <dd><%= @milestone.due_on ? l(@milestone.due_on, format: :long) : "No date" %></dd>
+    </div>
+    <div>
+      <dt class="font-medium text-slate-900">State</dt>
+      <dd><%= @milestone.state.titleize %></dd>
+    </div>
+  </dl>
+
+  <p class="mt-4 text-slate-600"><%= @milestone.description %></p>
+</div>
