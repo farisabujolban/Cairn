@@ -31,6 +31,10 @@ class MembershipPolicy < ApplicationPolicy
     transferable? ? Membership::ROLES : Membership::ROLES - %w[ owner ]
   end
 
+  class Scope < ApplicationPolicy::Scope
+    def resolve = scope.where(project: Project.visible_to(user))
+  end
+
   private
     # Choosing "owner" for an existing member *is* the transfer, which matrix
     # row 6 reserves for the owner. It is withheld on a new membership because
@@ -39,8 +43,4 @@ class MembershipPolicy < ApplicationPolicy
     def transferable?
       record.persisted? && ProjectPolicy.new(user, record.project).transfer_ownership?
     end
-
-  class Scope < ApplicationPolicy::Scope
-    def resolve = scope.where(project: Project.visible_to(user))
-  end
 end

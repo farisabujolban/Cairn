@@ -34,6 +34,23 @@ class ApplicationPolicy
   def new? = create?
   def edit? = update?
 
+  # Indexes filter in the query, never in the view (§4). Each subclass says how
+  # its model reaches a project the user is a member of.
+  class Scope
+    attr_reader :user, :scope
+
+    def initialize(user, scope)
+      @user = user
+      @scope = scope
+    end
+
+    # Raising beats returning the unfiltered scope: a subclass that forgets this
+    # must break the build, not quietly list every project's rows.
+    def resolve
+      raise NoMethodError, "#{self.class} must define #resolve"
+    end
+  end
+
   private
     # Every record in this app sits in exactly one project — either by being
     # one, or by reaching one through containment. Nothing else is consulted.
@@ -53,21 +70,4 @@ class ApplicationPolicy
     def contributor? = role.in?(CONTRIBUTOR_ROLES)
     def administrator? = role.in?(ADMINISTRATOR_ROLES)
     def owner? = role == "owner"
-
-  # Indexes filter in the query, never in the view (§4). Each subclass says how
-  # its model reaches a project the user is a member of.
-  class Scope
-    attr_reader :user, :scope
-
-    def initialize(user, scope)
-      @user = user
-      @scope = scope
-    end
-
-    # Raising beats returning the unfiltered scope: a subclass that forgets this
-    # must break the build, not quietly list every project's rows.
-    def resolve
-      raise NoMethodError, "#{self.class} must define #resolve"
-    end
-  end
 end
