@@ -10,9 +10,9 @@
   </div>
 
   <% if @projects.any? %>
-    <ul class="mt-6 divide-y divide-slate-200 rounded-md border border-slate-200">
+    <ul class="mt-6 divide-y divide-slate-200 rounded-md border border-slate-200 bg-white">
       <% @projects.each do |project| %>
-        <li class="relative p-4 first:rounded-t-md last:rounded-b-md hover:bg-slate-50 focus-within:bg-slate-50">
+        <li class="relative p-4 first:rounded-t-md last:rounded-b-md transition-colors hover:bg-slate-50 hover:inset-ring-1 hover:inset-ring-slate-300 focus-within:bg-slate-50 focus-within:inset-ring-2 focus-within:inset-ring-slate-900">
           <%# The title carries a full-card overlay so the whole row is one click target. %>
           <%= link_to project.name, project, class: "font-medium text-slate-900 after:absolute after:inset-0 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" %>
           <% if project.description.present? %>
