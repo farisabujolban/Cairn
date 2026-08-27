@@ -14,10 +14,11 @@
   <% if @epics.any? %>
     <ul class="mt-6 divide-y divide-slate-200 rounded-md border border-slate-200">
       <% @epics.each do |epic| %>
-        <li class="flex items-baseline justify-between gap-4 p-4">
+        <li class="relative flex items-baseline justify-between gap-4 p-4 first:rounded-t-md last:rounded-b-md hover:bg-slate-50 focus-within:bg-slate-50">
           <div>
+            <%# The title carries a full-card overlay so the whole row is one click target. %>
             <%= link_to epic.title, project_epic_path(@project, epic),
-                  class: "font-medium text-slate-900 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" %>
+                  class: "font-medium text-slate-900 after:absolute after:inset-0 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" %>
             <% if epic.description.present? %>
               <p class="mt-1 text-sm text-slate-600"><%= epic.description %></p>
             <% end %>
