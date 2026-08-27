@@ -138,3 +138,8 @@ domain model, authorization, security. Read it before changing anything.
 If `rails` on your `PATH` resolves to Apple's stub at `/usr/bin/rails`, add the
 gem bindir (`ruby -e 'puts Gem.bindir'`) ahead of `/usr/bin` in your shell
 profile. Inside the project, `bin/rails` already resolves correctly.
+
+## License
+
+MIT — see [LICENSE](LICENSE). You may use, change and redistribute this code,
+including commercially, as long as the copyright notice stays with it.
