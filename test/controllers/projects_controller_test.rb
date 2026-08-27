@@ -79,6 +79,26 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  # A form with no way out is a dead end: the only exit was the browser's back
+  # button. Cancel returns to the list the form was opened from.
+  test "new offers a cancel link back to the project list" do
+    sign_in_as users(:admin)
+
+    get new_project_url
+
+    assert_select "a[href=?]", projects_path, text: "Cancel"
+  end
+
+  # Cancelling an edit returns to the record being edited, not to the list —
+  # that is the screen the Edit button was pressed on.
+  test "edit offers a cancel link back to the project" do
+    sign_in_as users(:one)
+
+    get edit_project_url(projects(:apollo))
+
+    assert_select "a[href=?]", project_path(projects(:apollo)), text: "Cancel"
+  end
+
   # A project with no owner cannot be transferred or deleted by anyone, so the
   # owning membership is created in the same breath as the project.
   test "create makes the creating system admin the owner" do

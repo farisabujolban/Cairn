@@ -75,6 +75,26 @@ class MilestonesControllerTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
   end
 
+  # A form with no way out is a dead end: the only exit was the browser's back
+  # button. Cancel returns to the list the form was opened from.
+  test "new offers a cancel link back to the milestone list" do
+    sign_in_as users(:one)
+
+    get new_project_milestone_url(projects(:apollo))
+
+    assert_select "a[href=?]", project_milestones_path(projects(:apollo)), text: "Cancel"
+  end
+
+  # Cancelling an edit returns to the record being edited, not to the list —
+  # that is the screen the Edit button was pressed on.
+  test "edit offers a cancel link back to the milestone" do
+    sign_in_as users(:one)
+
+    get edit_project_milestone_url(projects(:apollo), milestones(:v1))
+
+    assert_select "a[href=?]", project_milestone_path(projects(:apollo), milestones(:v1)), text: "Cancel"
+  end
+
   test "new is forbidden for a viewer" do
     sign_in_as users(:two)
 

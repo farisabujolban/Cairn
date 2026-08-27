@@ -102,6 +102,26 @@ class EpicsControllerTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
   end
 
+  # A form with no way out is a dead end: the only exit was the browser's back
+  # button. Cancel returns to the list the form was opened from.
+  test "new offers a cancel link back to the epic list" do
+    sign_in_as users(:one)
+
+    get new_project_epic_url(projects(:apollo))
+
+    assert_select "a[href=?]", project_epics_path(projects(:apollo)), text: "Cancel"
+  end
+
+  # Cancelling an edit returns to the record being edited, not to the list —
+  # that is the screen the Edit button was pressed on.
+  test "edit offers a cancel link back to the epic" do
+    sign_in_as users(:one)
+
+    get edit_project_epic_url(projects(:apollo), epics(:telemetry))
+
+    assert_select "a[href=?]", project_epic_path(projects(:apollo), epics(:telemetry)), text: "Cancel"
+  end
+
   # A viewer has no create button, but the form is trivially reconstructed by
   # hand — so the check cannot live in the view.
   test "create is forbidden for a viewer" do
