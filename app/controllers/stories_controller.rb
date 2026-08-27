@@ -3,21 +3,20 @@ class StoriesController < ApplicationController
 
   before_action :set_epic, only: %i[ index new create ]
   before_action :set_story, only: %i[ show edit update destroy ]
-  before_action :require_contributor, only: %i[ new create edit update destroy ]
 
   def index
-    @stories = @epic.stories.ordered
+    @stories = policy_scope(@epic.stories).ordered
   end
 
   def show
   end
 
   def new
-    @story = @epic.stories.new
+    @story = authorize @epic.stories.new
   end
 
   def create
-    @story = @epic.stories.new(story_params)
+    @story = authorize @epic.stories.new(story_params)
 
     if @story.save
       redirect_to project_story_path(@project, @story), notice: "Story created."
@@ -51,9 +50,10 @@ class StoriesController < ApplicationController
     end
 
     # The member routes carry no epic id, so the scope comes from the project's
-    # epics: a story outside them is not found rather than forbidden.
+    # epics: a story outside them is not found rather than forbidden. The policy
+    # then answers the role question on the record that was found.
     def set_story
-      @story = Story.where(epic: @project.epics).find(params[:id])
+      @story = authorize Story.where(epic: @project.epics).find(params[:id])
       @epic = @story.epic
     end
 
