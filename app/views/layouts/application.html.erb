@@ -20,10 +20,34 @@
 
     <%# Includes all stylesheet files in app/assets/stylesheets %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
   </head>
 
-  <body>
-    <main class="container mx-auto mt-28 px-5 flex">
+  <body class="min-h-screen bg-slate-50 text-slate-900">
+    <% if authenticated? %>
+      <header class="border-b border-slate-200 bg-white">
+        <nav class="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-3">
+          <%= link_to "Project Tracker", root_path, class: "font-semibold text-slate-900 hover:underline" %>
+          <div class="flex items-center gap-3 text-sm text-slate-600">
+            <span><%= Current.user.name %></span>
+            <%= button_to "Sign out", session_path, method: :delete,
+                  class: "rounded-md border border-slate-300 px-2 py-1 hover:bg-slate-50" %>
+          </div>
+        </nav>
+      </header>
+    <% end %>
+
+    <% if flash.any? %>
+      <div class="mx-auto max-w-3xl px-4 pt-4">
+        <% flash.each do |type, message| %>
+          <p class="rounded-md border px-4 py-2 text-sm <%= type.to_s == "alert" ? "border-red-300 bg-red-50 text-red-800" : "border-green-300 bg-green-50 text-green-800" %>">
+            <%= message %>
+          </p>
+        <% end %>
+      </div>
+    <% end %>
+
+    <main>
       <%= yield %>
     </main>
   </body>
