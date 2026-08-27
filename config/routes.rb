@@ -10,7 +10,10 @@ Rails.application.routes.draw do
     resources :epics do
       resources :stories, only: %i[ index new create ]
     end
-    resources :stories, only: %i[ show edit update destroy ]
+    resources :stories, only: %i[ show edit update destroy ] do
+      resources :tasks, only: %i[ index new create ]
+    end
+    resources :tasks, only: %i[ show edit update destroy ]
   end
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

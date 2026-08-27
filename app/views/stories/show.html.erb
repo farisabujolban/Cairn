@@ -42,4 +42,12 @@
   </dl>
 
   <p class="mt-4 text-slate-600"><%= @story.description %></p>
+
+  <nav class="mt-6 flex gap-3 border-t border-slate-200 pt-6 text-sm">
+    <%# The only way into this story's tasks: containment is the navigation. %>
+    <%= link_to project_story_tasks_path(@project, @story),
+          class: "rounded-md border border-slate-300 px-3 py-2 font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" do %>
+      Tasks <span class="text-slate-500">(<%= @story.tasks.size %>)</span>
+    <% end %>
+  </nav>
 </div>

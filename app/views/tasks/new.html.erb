@@ -1,0 +1,9 @@
+<% content_for :title, "New task" %>
+
+<div class="mx-auto max-w-3xl px-4 py-8">
+  <h1 class="text-2xl font-semibold text-slate-900">New task</h1>
+  <p class="mt-1 text-sm text-slate-600">In <%= @story.title %></p>
+  <%= render "form", project: @project, task: @task,
+        form_url: project_story_tasks_path(@project, @story),
+        cancel_path: project_story_tasks_path(@project, @story) %>
+</div>

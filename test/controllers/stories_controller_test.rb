@@ -57,6 +57,16 @@ class StoriesControllerTest < ActionDispatch::IntegrationTest
     assert_match stories(:countdown).title, response.body
   end
 
+  # Tasks are only reachable from the story that contains them, so the story
+  # page is the one screen that has to offer the way in.
+  test "show links to the story's tasks" do
+    sign_in_as users(:one)
+
+    get project_story_url(projects(:apollo), stories(:countdown))
+
+    assert_select "a[href=?]", project_story_tasks_path(projects(:apollo), stories(:countdown))
+  end
+
   # Member routes drop the epic from the path but not the project: the lookup
   # runs through this project's epics, so another project's story is invisible
   # here even to someone who is a member of both.

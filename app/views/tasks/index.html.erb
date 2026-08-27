@@ -1,0 +1,35 @@
+<% content_for :title, "#{@story.title} tasks" %>
+
+<div class="mx-auto max-w-3xl px-4 py-8">
+  <%= back_link_to @story.title, project_story_path(@project, @story) %>
+
+  <div class="mt-4 flex items-center justify-between gap-4">
+    <h1 class="text-2xl font-semibold text-slate-900">Tasks</h1>
+    <% if contributor? %>
+      <%= link_to "New task", new_project_story_task_path(@project, @story),
+            class: "rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900" %>
+    <% end %>
+  </div>
+
+  <% if @tasks.any? %>
+    <ul class="mt-6 divide-y divide-slate-200 rounded-md border border-slate-200 bg-white">
+      <% @tasks.each do |task| %>
+        <li class="relative flex items-baseline justify-between gap-4 p-4 first:rounded-t-md last:rounded-b-md transition-colors hover:bg-slate-50 hover:inset-ring-1 hover:inset-ring-slate-300 focus-within:bg-slate-50 focus-within:inset-ring-2 focus-within:inset-ring-slate-900">
+          <%# The title carries a full-card overlay so the whole row is one click target. %>
+          <%= link_to task.title, project_task_path(@project, task),
+                class: "font-medium text-slate-900 after:absolute after:inset-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" %>
+          <div class="shrink-0 text-right text-sm text-slate-600">
+            <p><%= task.status.titleize %></p>
+            <% if task.assignee %>
+              <p class="mt-1 text-xs"><%= task.assignee.name %></p>
+            <% end %>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="mt-6 rounded-md border border-dashed border-slate-300 p-8 text-center text-slate-600">
+      This story has no tasks yet.
+    </p>
+  <% end %>
+</div>
