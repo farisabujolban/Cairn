@@ -8,9 +8,25 @@ class ApplicationController < ActionController::Base
   # Changes to the importmap will invalidate the etag for HTML responses
   stale_when_importmap_changes
 
+  # §4's mechanical half. An action that forgets to authorize, or an index that
+  # forgets its scope, raises instead of quietly returning 200 — which converts
+  # "we remembered to check" into "it is impossible to forget".
+  after_action :verify_authorization_performed
+
   rescue_from Pundit::NotAuthorizedError, with: :deny_access
 
   private
+    # Pundit's own idiom for this pair is `except: :index` and `only: :index` on
+    # two separate callbacks. Naming an action in a callback that every
+    # controller inherits is a trap here: raise_on_missing_callback_actions
+    # turns the reference into AbstractController::ActionNotFound for any
+    # controller that has no index action, and that renders as a bare 404 with
+    # nothing to say why. Branching on the action instead keeps the guard armed
+    # on controllers that never define an index at all.
+    def verify_authorization_performed
+      action_name == "index" ? verify_policy_scoped : verify_authorized
+    end
+
     # Pundit's default is a current_user method; this app keeps the signed-in
     # user on Current instead.
     def pundit_user = Current.user
