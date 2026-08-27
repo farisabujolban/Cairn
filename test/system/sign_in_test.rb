@@ -25,8 +25,8 @@ class SignInTest < ApplicationSystemTestCase
     fill_in "Password", with: "definitely-wrong"
     click_on "Sign in"
 
-    assert_current_path new_session_path
     assert_text "Try another email address or password"
+    assert_current_path new_session_path
   end
 
   test "signing out returns the user to the sign-in form" do
