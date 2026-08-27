@@ -1,9 +1,14 @@
 # Shared by every controller whose records live inside a project.
 #
-# The scoping is the authorization: looking the project up through the current
-# user's memberships means a non-member's request raises RecordNotFound and
-# renders 404, so they never learn the project exists. Phase 4 replaces this
-# with Pundit policies; until then it is duplicated nowhere else.
+# The project is looked up through the same scope ProjectPolicy::Scope resolves
+# to, so a non-member's request raises RecordNotFound and renders 404 without
+# ever reaching a policy — they never learn the project exists.
+#
+# It is deliberately *not* `authorize @project` here. Pundit's verify_authorized
+# is satisfied by any single authorize call in the request, so authorizing the
+# project would quietly excuse an action that forgot to authorize its own epic
+# or task. Scoping the lookup instead leaves that guarantee intact, and leaves
+# the project's own visibility enforced in the query rather than after it.
 module ProjectScoped
   extend ActiveSupport::Concern
 
@@ -18,19 +23,17 @@ module ProjectScoped
       @project = Project.visible_to(Current.user).find(params[:project_id])
     end
 
+    # A second copy of the §4 matrix, which is exactly what this phase exists to
+    # delete. It is retired one controller at a time as each gains its policy;
+    # the last controller to stop calling it takes these three methods with it.
     def current_membership
       @current_membership ||= Current.user.memberships.find_by(project: @project)
     end
 
-    # The §4 matrix puts epic, story, task and milestone changes at member
-    # level: ordinary project work, not administration. Views ask the same
-    # question so a viewer is not shown buttons that would only 403.
     def contributor?
       current_membership&.role&.in?(%w[ owner admin member ]) || false
     end
 
-    # A viewer gets 403 rather than 404: they already know the project exists,
-    # so hiding it would only confuse.
     def require_contributor
       head :forbidden unless contributor?
     end
