@@ -145,6 +145,28 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Rewritten", projects(:apollo).reload.description
   end
 
+  # The matrix puts editing the project at administrator level, so an admin is
+  # the highest role that is not the owner and must still be allowed through.
+  test "update saves changes for a project admin" do
+    sign_in_as apollo_user(:admin)
+
+    patch project_url(projects(:apollo)), params: { project: { description: "Edited by an admin" } }
+
+    assert_redirected_to project_url(projects(:apollo))
+    assert_equal "Edited by an admin", projects(:apollo).reload.description
+  end
+
+  # The line the matrix draws between project work and project administration:
+  # a member files epics all day and still cannot rename the project.
+  test "update is forbidden for a member" do
+    sign_in_as apollo_user(:member)
+
+    patch project_url(projects(:apollo)), params: { project: { description: "Renamed" } }
+
+    assert_response :forbidden
+    assert_not_equal "Renamed", projects(:apollo).reload.description
+  end
+
   # 403 rather than 404 here: a viewer already knows the project exists, so
   # hiding it would only be confusing. The role, not the project, is the problem.
   test "update is forbidden for a viewer" do
