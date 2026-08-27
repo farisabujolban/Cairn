@@ -104,6 +104,37 @@ class EpicsControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_content
   end
 
+  # "Member" is the floor the matrix draws for changing work, so it is tested
+  # with a user who holds exactly that role rather than an owner standing in.
+  test "create is allowed for a user whose role is member" do
+    sign_in_as apollo_user(:member)
+
+    assert_difference -> { projects(:apollo).epics.count }, 1 do
+      post project_epics_url(projects(:apollo)), params: { epic: { title: "Pad hardware" } }
+    end
+  end
+
+  # The button and the permission behind it are now one question asked of one
+  # policy, so a viewer is never offered a control that would only 403.
+  test "index hides the new epic button from a viewer and shows it to a member" do
+    sign_in_as apollo_user(:viewer)
+    get project_epics_url(projects(:apollo))
+    assert_select "a[href=?]", new_project_epic_path(projects(:apollo)), count: 0
+
+    sign_in_as apollo_user(:member)
+    get project_epics_url(projects(:apollo))
+    assert_select "a[href=?]", new_project_epic_path(projects(:apollo))
+  end
+
+  test "show hides the edit and delete controls from a viewer" do
+    sign_in_as apollo_user(:viewer)
+
+    get project_epic_url(projects(:apollo), epics(:launch))
+
+    assert_select "a[href=?]", edit_project_epic_path(projects(:apollo), epics(:launch)), count: 0
+    assert_select "form[action=?]", project_epic_path(projects(:apollo), epics(:launch)), count: 0
+  end
+
   test "new is forbidden for a viewer" do
     sign_in_as users(:two)
 

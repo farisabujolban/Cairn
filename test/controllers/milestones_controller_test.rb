@@ -63,6 +63,41 @@ class MilestonesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to project_milestones_url(projects(:gemini))
   end
 
+  # The role that gives the matrix's third row its name. "Member" is the floor
+  # for changing work, so it has to be tested with a user who is exactly that
+  # rather than an owner standing in for one.
+  test "create is allowed for a user whose role is member" do
+    sign_in_as apollo_user(:member)
+
+    assert_difference -> { projects(:apollo).milestones.count }, 1 do
+      post project_milestones_url(projects(:apollo)), params: { milestone: { title: "v1.3" } }
+    end
+  end
+
+  # The button and the permission behind it are now the same question, asked of
+  # the same policy. A viewer offered a button that only 403s is a worse
+  # experience than no button, and it invites a bug report instead of a shrug.
+  test "index hides the new milestone button from a viewer and shows it to a member" do
+    sign_in_as apollo_user(:viewer)
+    get project_milestones_url(projects(:apollo))
+    assert_select "a[href=?]", new_project_milestone_path(projects(:apollo)), count: 0
+
+    sign_in_as apollo_user(:member)
+    get project_milestones_url(projects(:apollo))
+    assert_select "a[href=?]", new_project_milestone_path(projects(:apollo))
+  end
+
+  # Same question on the record screen: a viewer reads the milestone and is
+  # offered no way to change or delete it.
+  test "show hides the edit and delete controls from a viewer" do
+    sign_in_as apollo_user(:viewer)
+
+    get project_milestone_url(projects(:apollo), milestones(:v1))
+
+    assert_select "a[href=?]", edit_project_milestone_path(projects(:apollo), milestones(:v1)), count: 0
+    assert_select "form[action=?]", project_milestone_path(projects(:apollo), milestones(:v1)), count: 0
+  end
+
   # A viewer has no create button, but the form is trivially reconstructed by
   # hand — so the check cannot live in the view.
   test "create is forbidden for a viewer" do

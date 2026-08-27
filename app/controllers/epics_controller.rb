@@ -2,21 +2,20 @@ class EpicsController < ApplicationController
   include ProjectScoped
 
   before_action :set_epic, only: %i[ show edit update destroy ]
-  before_action :require_contributor, only: %i[ new create edit update destroy ]
 
   def index
-    @epics = @project.epics.ordered
+    @epics = policy_scope(@project.epics).ordered
   end
 
   def show
   end
 
   def new
-    @epic = @project.epics.new
+    @epic = authorize @project.epics.new
   end
 
   def create
-    @epic = @project.epics.new(epic_params)
+    @epic = authorize @project.epics.new(epic_params)
 
     if @epic.save
       redirect_to project_epic_path(@project, @epic), notice: "Epic created."
@@ -44,9 +43,10 @@ class EpicsController < ApplicationController
 
   private
     # Looked up through the project rather than globally: pairing one project's
-    # path with another project's epic id must resolve to nothing.
+    # path with another project's epic id must resolve to nothing. The policy
+    # then answers the role question on the record that was found.
     def set_epic
-      @epic = @project.epics.find(params[:id])
+      @epic = authorize @project.epics.find(params[:id])
     end
 
     # milestone_id is permitted because the form sets it, but Epic validates

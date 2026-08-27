@@ -327,7 +327,9 @@ discouraged. Keep it that way.
 Nested resources (`/projects/:project_id/epics/:id`, etc.), shallow where sensible.
 
 **Key screens:** project list; project backlog (the tree view — epics with nested stories and
-tasks, collapsible); milestone list with progress; per-item detail page.
+tasks, collapsible); milestone list with progress; per-item detail page; archived project list
+(§13 phase 5 — the project list filters to active, so archived projects need a screen of their
+own to be restored from).
 
 Inline status changes and inline create via Turbo Frames. Full page reloads are acceptable
 everywhere else in v1.
@@ -648,6 +650,25 @@ valid, and then **stops for human review before the next phase begins.**
    **Build the §7 accessibility items here, inline with the templates** — skip link, landmarks,
    focus rings, `motion-reduce:`, labelled controls. They are near-free now and a five-view
    retrofit later.
+
+   **Also build the project archive and delete screens here**, closing §4 matrix rows 5 and 6.
+   Phase 4 implemented and tested `ProjectPolicy#archive?` and `#destroy?` and left both with no
+   caller — the matrix grants them and no phase built the UI, which was an omission in this
+   document rather than a deferral. They land in this phase for the same timing reason the
+   accessibility items do: a screen built after this phase is a screen the accessibility pass has
+   to be retrofitted onto. Waiting also means Phase 8 deploys to a real server on which the only
+   way to retire a project is the Rails console.
+
+   Two decisions this needs, neither of which is made above:
+
+   - The project list filters to `active`, so **archiving must come with a way to see and restore
+     archived projects.** Otherwise it is a one-way trip that hides the project from the only
+     screen that could bring it back.
+   - Deleting cascades through epics, stories and tasks. It needs a confirmation that says what
+     is about to be destroyed, not a bare "are you sure?".
+
+   `resources :projects` already routes `DELETE` to a `destroy` action that does not exist, so
+   that URL currently renders 404. Building the screen closes it.
 
 6. **Site search.** FTS5 table, search UI, results grouped by type. **Write the cross-project leak
    test from §8 first**, before any query code exists.

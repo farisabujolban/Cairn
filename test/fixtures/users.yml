@@ -17,3 +17,15 @@ two:
   name: Two Member
   email_address: two@example.com
   password_digest: <%= password_digest %>
+
+# Three and Four exist so Apollo holds all four roles at once: the §4 matrix is
+# tested row by row, and every row needs a user in each column.
+three:
+  name: Three Admin
+  email_address: three@example.com
+  password_digest: <%= password_digest %>
+
+four:
+  name: Four Contributor
+  email_address: four@example.com
+  password_digest: <%= password_digest %>

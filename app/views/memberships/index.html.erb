@@ -1,0 +1,52 @@
+<% content_for :title, "#{@project.name} members" %>
+
+<div class="mx-auto max-w-3xl px-4 py-8">
+  <%= back_link_to @project.name, project_path(@project) %>
+
+  <div class="mt-4 flex flex-wrap items-center justify-between gap-4">
+    <h1 class="text-2xl font-semibold text-slate-900">Members</h1>
+    <%# Matrix row 4. The control appears exactly when the request behind it
+        would be allowed, because both ask the same policy. %>
+    <% if policy(@project.memberships.new).new? %>
+      <%= link_to "Add member", new_project_membership_path(@project),
+            class: "rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900" %>
+    <% end %>
+  </div>
+
+  <ul class="mt-6 divide-y divide-slate-200 rounded-md border border-slate-200 bg-white">
+    <% @memberships.each do |membership| %>
+      <li class="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 p-4 first:rounded-t-md last:rounded-b-md">
+        <div class="min-w-0 flex-1 basis-48 break-words">
+          <p class="font-medium text-slate-900"><%= membership.user.name %></p>
+          <p class="mt-1 text-sm text-slate-600"><%= membership.user.email_address %></p>
+        </div>
+
+        <div class="flex shrink-0 flex-wrap items-center gap-2">
+          <% if policy(membership).update? %>
+            <%= form_with model: [ @project, membership ], method: :patch, class: "flex items-center gap-2" do |form| %>
+              <%# The visible column heading is the person's name, so the select
+                  needs its own label for anyone not reading the row visually. %>
+              <%= form.label :role, "Role for #{membership.user.name}", class: "sr-only" %>
+              <%= form.select :role,
+                    policy(membership).assignable_roles.map { |role| [ role.titleize, role ] },
+                    {},
+                    class: "rounded-md border border-slate-300 px-2 py-1 text-sm text-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900" %>
+              <%= form.submit "Save",
+                    class: "cursor-pointer rounded-md border border-slate-300 px-3 py-1 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900" %>
+            <% end %>
+          <% else %>
+            <%# The owner's row, and every row seen by someone who cannot change
+                roles: the role is still shown, just not as a control. %>
+            <p class="text-sm text-slate-600"><%= membership.role.titleize %></p>
+          <% end %>
+
+          <% if policy(membership).destroy? %>
+            <%= button_to "Remove", project_membership_path(@project, membership), method: :delete,
+                  form: { data: { turbo_confirm: "Remove #{membership.user.name} from this project?" } },
+                  class: "cursor-pointer rounded-md border border-slate-300 px-3 py-1 text-sm font-medium text-slate-700 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600" %>
+          <% end %>
+        </div>
+      </li>
+    <% end %>
+  </ul>
+</div>

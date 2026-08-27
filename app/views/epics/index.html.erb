@@ -3,9 +3,11 @@
 <div class="mx-auto max-w-3xl px-4 py-8">
   <%= back_link_to @project.name, project_path(@project) %>
 
-  <div class="mt-4 flex items-center justify-between gap-4">
+  <div class="mt-4 flex flex-wrap items-center justify-between gap-4">
     <h1 class="text-2xl font-semibold text-slate-900">Epics</h1>
-    <% if contributor? %>
+    <%# Asked of the policy rather than of a role list in the controller: the
+        button appears exactly when the submission behind it would be allowed. %>
+    <% if policy(@project.epics.new).new? %>
       <%= link_to "New epic", new_project_epic_path(@project),
             class: "rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900" %>
     <% end %>
@@ -14,8 +16,11 @@
   <% if @epics.any? %>
     <ul class="mt-6 divide-y divide-slate-200 rounded-md border border-slate-200 bg-white">
       <% @epics.each do |epic| %>
-        <li class="relative flex items-baseline justify-between gap-4 p-4 first:rounded-t-md last:rounded-b-md transition-colors hover:bg-slate-50 hover:inset-ring-1 hover:inset-ring-slate-300 focus-within:bg-slate-50 focus-within:inset-ring-2 focus-within:inset-ring-slate-900">
-          <div>
+        <li class="relative flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 p-4 first:rounded-t-md last:rounded-b-md transition-colors hover:bg-slate-50 hover:inset-ring-1 hover:inset-ring-slate-300 focus-within:bg-slate-50 focus-within:inset-ring-2 focus-within:inset-ring-slate-900">
+          <%# min-w-0 lets this column shrink past its longest word, and break-words
+              lets that word split rather than run out of the card. Without both, a
+              narrow viewport pushes the status column past the border. %>
+          <div class="min-w-0 flex-1 basis-48 break-words">
             <%# The title carries a full-card overlay so the whole row is one click target. %>
             <%= link_to epic.title, project_epic_path(@project, epic),
                   class: "font-medium text-slate-900 after:absolute after:inset-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" %>

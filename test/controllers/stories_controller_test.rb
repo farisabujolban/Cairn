@@ -130,6 +130,37 @@ class StoriesControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_content
   end
 
+  # "Member" is the floor the matrix draws for changing work, so it is tested
+  # with a user who holds exactly that role rather than an owner standing in.
+  test "create is allowed for a user whose role is member" do
+    sign_in_as apollo_user(:member)
+
+    assert_difference -> { epics(:launch).stories.count }, 1 do
+      post project_epic_stories_url(projects(:apollo), epics(:launch)), params: { story: { title: "Hold logic" } }
+    end
+  end
+
+  # The button and the permission behind it are now one question asked of one
+  # policy, so a viewer is never offered a control that would only 403.
+  test "index hides the new story button from a viewer and shows it to a member" do
+    sign_in_as apollo_user(:viewer)
+    get project_epic_stories_url(projects(:apollo), epics(:launch))
+    assert_select "a[href=?]", new_project_epic_story_path(projects(:apollo), epics(:launch)), count: 0
+
+    sign_in_as apollo_user(:member)
+    get project_epic_stories_url(projects(:apollo), epics(:launch))
+    assert_select "a[href=?]", new_project_epic_story_path(projects(:apollo), epics(:launch))
+  end
+
+  test "show hides the edit and delete controls from a viewer" do
+    sign_in_as apollo_user(:viewer)
+
+    get project_story_url(projects(:apollo), stories(:countdown))
+
+    assert_select "a[href=?]", edit_project_story_path(projects(:apollo), stories(:countdown)), count: 0
+    assert_select "form[action=?]", project_story_path(projects(:apollo), stories(:countdown)), count: 0
+  end
+
   test "new is forbidden for a viewer" do
     sign_in_as users(:two)
 

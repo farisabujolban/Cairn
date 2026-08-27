@@ -3,21 +3,20 @@ class TasksController < ApplicationController
 
   before_action :set_story, only: %i[ index new create ]
   before_action :set_task, only: %i[ show edit update destroy ]
-  before_action :require_contributor, only: %i[ new create edit update destroy ]
 
   def index
-    @tasks = @story.tasks.ordered
+    @tasks = policy_scope(@story.tasks).ordered
   end
 
   def show
   end
 
   def new
-    @task = @story.tasks.new
+    @task = authorize @story.tasks.new
   end
 
   def create
-    @task = @story.tasks.new(task_params)
+    @task = authorize @story.tasks.new(task_params)
 
     if @task.save
       redirect_to project_task_path(@project, @task), notice: "Task created."
@@ -51,9 +50,10 @@ class TasksController < ApplicationController
     end
 
     # The member routes carry no story id, so the scope comes from the project's
-    # stories: a task outside them is not found rather than forbidden.
+    # stories: a task outside them is not found rather than forbidden. The
+    # policy then answers the role question on the record that was found.
     def set_task
-      @task = Task.where(story: Story.where(epic: @project.epics)).find(params[:id])
+      @task = authorize Task.where(story: Story.where(epic: @project.epics)).find(params[:id])
       @story = @task.story
     end
 
