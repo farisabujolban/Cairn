@@ -4,6 +4,7 @@ class Project < ApplicationRecord
   has_many :memberships, dependent: :destroy
   has_many :users, through: :memberships
   has_many :milestones, dependent: :destroy
+  has_many :epics, dependent: :destroy
 
   normalizes :name, with: ->(n) { n.strip }
 

@@ -10,7 +10,21 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_27_063920) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_27_065428) do
+  create_table "epics", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.integer "milestone_id"
+    t.integer "position", null: false
+    t.integer "project_id", null: false
+    t.string "status", default: "backlog", null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.index ["milestone_id"], name: "index_epics_on_milestone_id"
+    t.index ["project_id", "position"], name: "index_epics_on_project_id_and_position"
+    t.index ["project_id"], name: "index_epics_on_project_id"
+  end
+
   create_table "memberships", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "project_id", null: false
@@ -63,6 +77,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_063920) do
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
+  add_foreign_key "epics", "milestones"
+  add_foreign_key "epics", "projects"
   add_foreign_key "memberships", "projects"
   add_foreign_key "memberships", "users"
   add_foreign_key "milestones", "projects"

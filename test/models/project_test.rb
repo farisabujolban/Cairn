@@ -83,6 +83,15 @@ class ProjectTest < ActiveSupport::TestCase
     end
   end
 
+  # Epics are the top of the containment tree and belong to exactly one project.
+  # Orphaned, they would be unreachable from every screen while still matching
+  # searches and counts.
+  test "destroying a project destroys its epics" do
+    assert_difference -> { Epic.count }, -2 do
+      projects(:apollo).destroy
+    end
+  end
+
   # Ownership transfer is the only sanctioned way past the one-owner rule: both
   # halves must happen together, or the project ends with two owners or none.
   test "transfer_ownership_to! promotes the new owner and demotes the old one" do

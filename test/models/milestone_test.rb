@@ -59,4 +59,15 @@ class MilestoneTest < ActiveSupport::TestCase
 
     assert_equal milestones(:undated), ordered.last
   end
+
+  # A ship date can be cancelled or renamed without the work planned against it
+  # ceasing to exist. Destroying the milestone must unschedule its epics, not
+  # delete them — the opposite of the project cascade.
+  test "destroying a milestone unschedules its epics instead of destroying them" do
+    assert_no_difference -> { Epic.count } do
+      milestones(:v1).destroy
+    end
+
+    assert_nil epics(:launch).reload.milestone_id
+  end
 end

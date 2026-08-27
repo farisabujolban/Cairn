@@ -1,0 +1,23 @@
+# Declared in reverse position order so the ordering test proves the scope is
+# sorting rather than returning insertion order.
+telemetry:
+  project: apollo
+  title: Telemetry pipeline
+  description: Instrument the launch sequence.
+  status: todo
+  position: 2
+
+launch:
+  project: apollo
+  title: Launch sequence
+  description: Everything needed to get off the pad.
+  status: backlog
+  position: 1
+  milestone: v1
+
+# Lives in the other project so scoping tests have something to exclude.
+gemini_rendezvous:
+  project: gemini
+  title: Orbital rendezvous
+  status: backlog
+  position: 1

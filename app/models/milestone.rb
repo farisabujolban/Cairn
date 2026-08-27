@@ -4,6 +4,9 @@ class Milestone < ApplicationRecord
   STATES = %w[ open closed ].freeze
 
   belongs_to :project
+  # Nullify, not destroy: a cancelled or renamed ship date must not take the
+  # work planned against it with it. The epic survives, unscheduled.
+  has_many :epics, dependent: :nullify
 
   enum :state, STATES.index_by(&:itself), validate: { allow_nil: true }
 
