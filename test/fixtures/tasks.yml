@@ -1,0 +1,21 @@
+# Declared in reverse position order so the ordering test proves the scope is
+# sorting rather than returning insertion order.
+hold_at_t_minus:
+  story: countdown
+  title: Hold at T-minus
+  status: todo
+  position: 2
+
+wire_the_clock:
+  story: countdown
+  title: Wire the clock to the console
+  status: backlog
+  position: 1
+  assignee: one
+
+# Lives in the other project so scoping tests have something to exclude.
+gemini_latch:
+  story: gemini_docking
+  title: Latch mechanism
+  status: backlog
+  position: 1

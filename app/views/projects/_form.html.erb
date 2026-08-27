@@ -20,5 +20,9 @@
     <%= form.text_area :description, rows: 4, class: "mt-1 block w-full rounded-md border border-slate-300 px-3 py-2" %>
   </div>
 
-  <%= form.submit class: "rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700" %>
+  <div class="flex items-center gap-4">
+    <%= form.submit class: "cursor-pointer rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900" %>
+    <%# Cancel, not a back link: one way out, and it lands where the form was opened from. %>
+    <%= link_to "Cancel", cancel_path, class: "text-sm font-medium text-slate-600 transition-colors hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" %>
+  </div>
 <% end %>

@@ -75,6 +75,26 @@ class MilestonesControllerTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
   end
 
+  # A form with no way out is a dead end: the only exit was the browser's back
+  # button. Cancel returns to the list the form was opened from.
+  test "new offers a cancel link back to the milestone list" do
+    sign_in_as users(:one)
+
+    get new_project_milestone_url(projects(:apollo))
+
+    assert_select "a[href=?]", project_milestones_path(projects(:apollo)), text: "Cancel"
+  end
+
+  # Cancelling an edit returns to the record being edited, not to the list —
+  # that is the screen the Edit button was pressed on.
+  test "edit offers a cancel link back to the milestone" do
+    sign_in_as users(:one)
+
+    get edit_project_milestone_url(projects(:apollo), milestones(:v1))
+
+    assert_select "a[href=?]", project_milestone_path(projects(:apollo), milestones(:v1)), text: "Cancel"
+  end
+
   test "new is forbidden for a viewer" do
     sign_in_as users(:two)
 
@@ -160,5 +180,28 @@ class MilestonesControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :not_found
+  end
+  # §7's milestone list with progress. It could not be written before stories
+  # existed, because "how much of v1.1 is done" counts stories — the epics
+  # scheduled against the date and the stories scheduled against it directly.
+  test "index shows how much of each milestone's work is done" do
+    sign_in_as users(:one)
+    stories(:countdown).done!
+
+    get project_milestones_url(projects(:apollo))
+
+    assert_response :success
+    assert_select "[role=progressbar][aria-valuenow=?]", "50"
+    assert_select "p", text: "1 of 2 stories done"
+  end
+
+  # A date with nothing planned against it says so, rather than drawing an empty
+  # bar that reads as "none of this is finished".
+  test "index says so when a milestone has nothing scheduled" do
+    sign_in_as users(:one)
+
+    get project_milestones_url(projects(:apollo))
+
+    assert_select "p", text: "No stories scheduled"
   end
 end

@@ -1,1 +1,22 @@
 @import "tailwindcss";
+
+/*
+ * Back links ("← Epics"). The arrow slides away from its label on hover and
+ * retracts when the pointer leaves, so the link answers the mouse with motion
+ * instead of an underline.
+ */
+.back-link__arrow {
+  display: inline-block;
+  transition: transform 150ms ease-out;
+}
+
+.back-link:hover .back-link__arrow,
+.back-link:focus-visible .back-link__arrow {
+  transform: translateX(-0.25rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .back-link__arrow {
+    transition: none;
+  }
+}

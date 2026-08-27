@@ -1,0 +1,30 @@
+# Declared in reverse position order so the ordering test proves the scope is
+# sorting rather than returning insertion order.
+abort_switch:
+  epic: launch
+  title: Abort switch
+  description: Cut the sequence from the console.
+  status: todo
+  position: 2
+
+countdown:
+  epic: launch
+  title: Countdown clock
+  description: Hold and resume without losing the sequence.
+  status: backlog
+  position: 1
+  milestone: v1
+  assignee: one
+
+telemetry_feed:
+  epic: telemetry
+  title: Live telemetry feed
+  status: backlog
+  position: 1
+
+# Lives in the other project so scoping tests have something to exclude.
+gemini_docking:
+  epic: gemini_rendezvous
+  title: Docking approach
+  status: backlog
+  position: 1

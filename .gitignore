@@ -36,3 +36,8 @@
 
 /app/assets/builds/*
 !/app/assets/builds/.keep
+
+# Personal working notes: they stay on this machine.
+/NEXT-STEPS.md
+/SUGGESTIONS.md
+/TestsToAdd.md

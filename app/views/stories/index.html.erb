@@ -1,0 +1,40 @@
+<% content_for :title, "#{@epic.title} stories" %>
+
+<div class="mx-auto max-w-3xl px-4 py-8">
+  <%= back_link_to @epic.title, project_epic_path(@project, @epic) %>
+
+  <div class="mt-4 flex items-center justify-between gap-4">
+    <h1 class="text-2xl font-semibold text-slate-900">Stories</h1>
+    <% if contributor? %>
+      <%= link_to "New story", new_project_epic_story_path(@project, @epic),
+            class: "rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900" %>
+    <% end %>
+  </div>
+
+  <% if @stories.any? %>
+    <ul class="mt-6 divide-y divide-slate-200 rounded-md border border-slate-200 bg-white">
+      <% @stories.each do |story| %>
+        <li class="relative flex items-baseline justify-between gap-4 p-4 first:rounded-t-md last:rounded-b-md transition-colors hover:bg-slate-50 hover:inset-ring-1 hover:inset-ring-slate-300 focus-within:bg-slate-50 focus-within:inset-ring-2 focus-within:inset-ring-slate-900">
+          <div>
+            <%# The title carries a full-card overlay so the whole row is one click target. %>
+            <%= link_to story.title, project_story_path(@project, story),
+                  class: "font-medium text-slate-900 after:absolute after:inset-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" %>
+            <% if story.description.present? %>
+              <p class="mt-1 text-sm text-slate-600"><%= story.description %></p>
+            <% end %>
+          </div>
+          <div class="shrink-0 text-right text-sm text-slate-600">
+            <p><%= story.status.titleize %></p>
+            <% if story.assignee %>
+              <p class="mt-1 text-xs"><%= story.assignee.name %></p>
+            <% end %>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="mt-6 rounded-md border border-dashed border-slate-300 p-8 text-center text-slate-600">
+      This epic has no stories yet.
+    </p>
+  <% end %>
+</div>

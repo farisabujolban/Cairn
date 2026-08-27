@@ -1,23 +1,24 @@
 <% content_for :title, "#{@project.name} epics" %>
 
 <div class="mx-auto max-w-3xl px-4 py-8">
-  <%= link_to "← #{@project.name}", project_path(@project), class: "text-sm text-slate-600 hover:underline" %>
+  <%= back_link_to @project.name, project_path(@project) %>
 
   <div class="mt-4 flex items-center justify-between gap-4">
     <h1 class="text-2xl font-semibold text-slate-900">Epics</h1>
     <% if contributor? %>
       <%= link_to "New epic", new_project_epic_path(@project),
-            class: "rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900" %>
+            class: "rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900" %>
     <% end %>
   </div>
 
   <% if @epics.any? %>
-    <ul class="mt-6 divide-y divide-slate-200 rounded-md border border-slate-200">
+    <ul class="mt-6 divide-y divide-slate-200 rounded-md border border-slate-200 bg-white">
       <% @epics.each do |epic| %>
-        <li class="flex items-baseline justify-between gap-4 p-4">
+        <li class="relative flex items-baseline justify-between gap-4 p-4 first:rounded-t-md last:rounded-b-md transition-colors hover:bg-slate-50 hover:inset-ring-1 hover:inset-ring-slate-300 focus-within:bg-slate-50 focus-within:inset-ring-2 focus-within:inset-ring-slate-900">
           <div>
+            <%# The title carries a full-card overlay so the whole row is one click target. %>
             <%= link_to epic.title, project_epic_path(@project, epic),
-                  class: "font-medium text-slate-900 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" %>
+                  class: "font-medium text-slate-900 after:absolute after:inset-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" %>
             <% if epic.description.present? %>
               <p class="mt-1 text-sm text-slate-600"><%= epic.description %></p>
             <% end %>

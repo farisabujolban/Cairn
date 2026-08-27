@@ -1,0 +1,13 @@
+<%# Done-count over total-count (§3), drawn the same way at every level. The bar
+    is a picture of the sentence beneath it, so the sentence is the accessible
+    name and nothing is announced twice. %>
+<% empty_label = local_assigns.fetch(:empty, "No #{unit} yet") %>
+<% label = progress.any? ? "#{progress} #{unit} done" : empty_label %>
+<div class="mt-4">
+  <div role="progressbar" aria-valuenow="<%= progress.percent %>" aria-valuemin="0" aria-valuemax="100"
+       aria-label="<%= label %>"
+       class="h-2 w-full overflow-hidden rounded-full bg-slate-200">
+    <div class="h-full rounded-full bg-slate-900 transition-all motion-reduce:transition-none" style="width: <%= progress.percent %>%"></div>
+  </div>
+  <p class="mt-2 text-sm text-slate-600"><%= label %></p>
+</div>

@@ -76,6 +76,26 @@ class EpicTest < ActiveSupport::TestCase
     assert_equal 1, epic.position
   end
 
+  # §3's progress helper: done stories over total stories. Status is manual at
+  # every level, so this counts what people set rather than deriving anything.
+  test "progress counts its done stories against all of them" do
+    epic = epics(:launch)
+    assert_equal Progress.new(done: 0, total: 2), epic.progress
+
+    epic.stories.first.done!
+
+    assert_equal Progress.new(done: 1, total: 2), epic.reload.progress
+  end
+
+  # An epic with nothing under it yet is the first thing anyone sees after
+  # creating one, so it must report empty rather than divide by zero.
+  test "progress on an epic with no stories is empty" do
+    epic = Epic.create!(project: projects(:apollo), title: "Empty")
+
+    assert_not epic.progress.any?
+    assert_equal 0, epic.progress.percent
+  end
+
   # The backlog tree reads in position order, not insertion order — that is the
   # whole point of storing a position at all.
   test "ordered returns epics by position" do

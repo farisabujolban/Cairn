@@ -47,6 +47,16 @@ class EpicsControllerTest < ActionDispatch::IntegrationTest
     assert_match epics(:launch).title, response.body
   end
 
+  # Stories are only reachable from the epic that contains them, so the epic
+  # page is the one screen that has to offer the way in.
+  test "show links to the epic's stories" do
+    sign_in_as users(:one)
+
+    get project_epic_url(projects(:apollo), epics(:launch))
+
+    assert_select "a[href=?]", project_epic_stories_path(projects(:apollo), epics(:launch))
+  end
+
   # The lookup runs through the project's own epics, so pairing one project's
   # path with another project's epic id resolves to nothing.
   test "show returns 404 for an epic belonging to a different project" do
@@ -100,6 +110,26 @@ class EpicsControllerTest < ActionDispatch::IntegrationTest
     get new_project_epic_url(projects(:apollo))
 
     assert_response :forbidden
+  end
+
+  # A form with no way out is a dead end: the only exit was the browser's back
+  # button. Cancel returns to the list the form was opened from.
+  test "new offers a cancel link back to the epic list" do
+    sign_in_as users(:one)
+
+    get new_project_epic_url(projects(:apollo))
+
+    assert_select "a[href=?]", project_epics_path(projects(:apollo)), text: "Cancel"
+  end
+
+  # Cancelling an edit returns to the record being edited, not to the list —
+  # that is the screen the Edit button was pressed on.
+  test "edit offers a cancel link back to the epic" do
+    sign_in_as users(:one)
+
+    get edit_project_epic_url(projects(:apollo), epics(:telemetry))
+
+    assert_select "a[href=?]", project_epic_path(projects(:apollo), epics(:telemetry)), text: "Cancel"
   end
 
   # A viewer has no create button, but the form is trivially reconstructed by
@@ -186,5 +216,16 @@ class EpicsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :not_found
+  end
+  # §3's progress bar, deferred out of Phase 2 because Epic#progress counts
+  # stories and there were none to count.
+  test "show reports how many of the epic's stories are done" do
+    sign_in_as users(:one)
+    stories(:countdown).done!
+
+    get project_epic_url(projects(:apollo), epics(:launch))
+
+    assert_select "[role=progressbar][aria-valuenow=?]", "50"
+    assert_select "p", text: "1 of 2 stories done"
   end
 end

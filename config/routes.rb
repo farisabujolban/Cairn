@@ -1,9 +1,19 @@
 Rails.application.routes.draw do
   resource :session
   resources :passwords, param: :token
+  # Shallow nesting that keeps the project prefix: collection actions hang off
+  # the parent that owns the list, member actions off the project alone. Every
+  # path still carries :project_id, which is what ProjectScoped authorizes on,
+  # and no URL grows past two levels of nesting.
   resources :projects do
     resources :milestones
-    resources :epics
+    resources :epics do
+      resources :stories, only: %i[ index new create ]
+    end
+    resources :stories, only: %i[ show edit update destroy ] do
+      resources :tasks, only: %i[ index new create ]
+    end
+    resources :tasks, only: %i[ show edit update destroy ]
   end
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
