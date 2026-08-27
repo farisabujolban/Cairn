@@ -394,7 +394,7 @@ test "search excludes results from projects the user is not a member of" do
 end
 ```
 
-### Implementation
+### Search implementation
 
 SQLite **FTS5** virtual table over the titles and descriptions of epics, stories, and tasks, kept
 in sync by triggers or model callbacks, with ranked results grouped by type. A single search box
