@@ -1,0 +1,45 @@
+<% content_for :title, @story.title %>
+
+<div class="mx-auto max-w-3xl px-4 py-8">
+  <%= back_link_to "Stories", project_epic_stories_path(@project, @epic) %>
+
+  <div class="mt-4 flex items-center justify-between gap-4">
+    <h1 class="text-2xl font-semibold text-slate-900"><%= @story.title %></h1>
+    <% if contributor? %>
+      <div class="flex items-center gap-2">
+        <%= link_to "Edit", edit_project_story_path(@project, @story),
+              class: "rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100" %>
+        <%= button_to "Delete", project_story_path(@project, @story), method: :delete,
+              form: { data: { turbo_confirm: "Delete this story?" } },
+              class: "cursor-pointer rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600" %>
+      </div>
+    <% end %>
+  </div>
+
+  <dl class="mt-4 flex flex-wrap gap-6 text-sm text-slate-600">
+    <div>
+      <dt class="font-medium text-slate-900">Epic</dt>
+      <dd><%= link_to @epic.title, project_epic_path(@project, @epic), class: "font-medium text-slate-900 transition-colors hover:text-slate-600" %></dd>
+    </div>
+    <div>
+      <dt class="font-medium text-slate-900">Status</dt>
+      <dd><%= @story.status.titleize %></dd>
+    </div>
+    <div>
+      <dt class="font-medium text-slate-900">Milestone</dt>
+      <dd>
+        <% if @story.milestone %>
+          <%= link_to @story.milestone.title, project_milestone_path(@project, @story.milestone), class: "font-medium text-slate-900 transition-colors hover:text-slate-600" %>
+        <% else %>
+          Unscheduled
+        <% end %>
+      </dd>
+    </div>
+    <div>
+      <dt class="font-medium text-slate-900">Assignee</dt>
+      <dd><%= @story.assignee&.name || "Unassigned" %></dd>
+    </div>
+  </dl>
+
+  <p class="mt-4 text-slate-600"><%= @story.description %></p>
+</div>

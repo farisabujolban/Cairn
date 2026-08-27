@@ -34,4 +34,12 @@
   </dl>
 
   <p class="mt-4 text-slate-600"><%= @epic.description %></p>
+
+  <nav class="mt-6 flex gap-3 border-t border-slate-200 pt-6 text-sm">
+    <%# The only way into this epic's stories: containment is the navigation. %>
+    <%= link_to project_epic_stories_path(@project, @epic),
+          class: "rounded-md border border-slate-300 px-3 py-2 font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" do %>
+      Stories <span class="text-slate-500">(<%= @epic.stories.size %>)</span>
+    <% end %>
+  </nav>
 </div>

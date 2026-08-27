@@ -47,6 +47,16 @@ class EpicsControllerTest < ActionDispatch::IntegrationTest
     assert_match epics(:launch).title, response.body
   end
 
+  # Stories are only reachable from the epic that contains them, so the epic
+  # page is the one screen that has to offer the way in.
+  test "show links to the epic's stories" do
+    sign_in_as users(:one)
+
+    get project_epic_url(projects(:apollo), epics(:launch))
+
+    assert_select "a[href=?]", project_epic_stories_path(projects(:apollo), epics(:launch))
+  end
+
   # The lookup runs through the project's own epics, so pairing one project's
   # path with another project's epic id resolves to nothing.
   test "show returns 404 for an epic belonging to a different project" do
