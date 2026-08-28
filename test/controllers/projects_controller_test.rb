@@ -187,4 +187,203 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :not_found
   end
+
+  # The default listing is the live work. An archived project still exists and
+  # is still readable, but it has been put away, and the list people open all
+  # day should not be where it stays.
+  test "index shows only active projects by default" do
+    sign_in_as users(:one)
+    projects(:apollo).archive!
+
+    get projects_url
+
+    assert_no_match(/#{projects(:apollo).name}/, response.body)
+    assert_match projects(:gemini).name, response.body
+  end
+
+  # The other half of the toggle. Without a screen that lists archived projects,
+  # archiving is a one-way trip: the project is hidden from the only list that
+  # could bring it back.
+  test "index lists the archived projects when asked for them" do
+    sign_in_as users(:one)
+    projects(:apollo).archive!
+
+    get projects_url(status: "archived")
+
+    assert_response :success
+    assert_match projects(:apollo).name, response.body
+    assert_no_match(/#{projects(:gemini).name}/, response.body)
+  end
+
+  # The archived listing is a filter on the same scope, not a way around it.
+  # Mercury is archived and belongs to nobody, so membership must still decide.
+  test "index does not leak archived projects the user is not a member of" do
+    sign_in_as users(:one)
+
+    get projects_url(status: "archived")
+
+    assert_response :success
+    assert_no_match(/#{projects(:archived).name}/, response.body)
+  end
+
+  # An unrecognised filter value must fall back to the live list rather than
+  # being passed to the model — the parameter names a scope, and only these two
+  # scopes may be named.
+  test "index falls back to the active listing for an unknown status" do
+    sign_in_as users(:one)
+    projects(:apollo).archive!
+
+    get projects_url(status: "destroy_all")
+
+    assert_response :success
+    assert_no_match(/#{projects(:apollo).name}/, response.body)
+  end
+
+  # Matrix row 5. Archiving lands on the archived listing rather than the active
+  # one, so the person who just archived sees where the project went and that
+  # Restore is sitting next to it.
+  test "archive puts the project away for an admin" do
+    sign_in_as apollo_user(:admin)
+
+    patch archive_project_url(projects(:apollo))
+
+    assert_redirected_to projects_path(status: "archived")
+    assert projects(:apollo).reload.archived?
+  end
+
+  # A member files epics all day and still cannot put the whole project away —
+  # the same line the matrix draws for renaming it.
+  test "archive is forbidden for a member" do
+    sign_in_as apollo_user(:member)
+
+    patch archive_project_url(projects(:apollo))
+
+    assert_response :forbidden
+    assert_not projects(:apollo).reload.archived?
+  end
+
+  test "archive returns 404 for a non-member rather than revealing the project" do
+    sign_in_as users(:admin)
+
+    patch archive_project_url(projects(:apollo))
+
+    assert_response :not_found
+    assert_not projects(:apollo).reload.archived?
+  end
+
+  # The return trip, which is what makes archiving reversible rather than a soft
+  # delete nobody can undo.
+  test "restore brings the project back for an admin" do
+    sign_in_as apollo_user(:admin)
+    projects(:apollo).archive!
+
+    patch restore_project_url(projects(:apollo))
+
+    assert_redirected_to project_path(projects(:apollo))
+    assert_not projects(:apollo).reload.archived?
+  end
+
+  test "restore is forbidden for a member" do
+    sign_in_as apollo_user(:member)
+    projects(:apollo).archive!
+
+    patch restore_project_url(projects(:apollo))
+
+    assert_response :forbidden
+    assert projects(:apollo).reload.archived?
+  end
+
+  # Matrix row 6, and the route that has been a 404 since phase 1: DELETE was
+  # routed with no action behind it.
+  test "destroy deletes the project and its contents for the owner" do
+    sign_in_as apollo_user(:owner)
+
+    # Counted at two levels: the cascade is the whole reason this row stops at
+    # the owner, so a delete that took the project and left its epics behind
+    # would be a worse bug than one that refused.
+    assert_difference -> { Project.count } => -1, -> { Epic.count } => -2,
+                      -> { Story.count } => -3, -> { Task.count } => -2 do
+      delete project_url(projects(:apollo))
+    end
+
+    assert_redirected_to projects_path
+  end
+
+  # The cascade is the reason this stops at the owner: an admin deleting a
+  # project takes every epic, story and task in it, and nobody can undo that.
+  test "destroy is forbidden for a project admin" do
+    sign_in_as apollo_user(:admin)
+
+    assert_no_difference -> { Project.count } do
+      delete project_url(projects(:apollo))
+    end
+
+    assert_response :forbidden
+  end
+
+  test "destroy returns 404 for a non-member rather than revealing the project" do
+    sign_in_as users(:admin)
+
+    assert_no_difference -> { Project.count } do
+      delete project_url(projects(:apollo))
+    end
+
+    assert_response :not_found
+  end
+
+  # The way back has to be on the screen, not just in the routes file. An
+  # archived project the user can restore is useless if the listing shows it
+  # without a control.
+  test "the archived listing offers a restore button" do
+    sign_in_as apollo_user(:admin)
+    projects(:apollo).archive!
+
+    get projects_url(status: "archived")
+
+    assert_select "form[action=?][method=post]", restore_project_path(projects(:apollo))
+  end
+
+  # A control that appears when the request behind it would be refused teaches
+  # people the app is broken. Both halves ask the same policy, so both change
+  # together.
+  test "a member is shown neither the archive nor the delete control" do
+    sign_in_as apollo_user(:member)
+
+    get project_url(projects(:apollo))
+
+    assert_response :success
+    assert_select "form[action=?]", archive_project_path(projects(:apollo)), count: 0
+    # Scoped to this project's path: the layout's own Sign out button is a
+    # DELETE too, and an unscoped selector would match it and pass regardless.
+    assert_select "form[action=?] input[value=delete]", project_path(projects(:apollo)), count: 0
+  end
+
+  # Matrix row 6 in the markup: an admin runs the project day to day and still
+  # cannot destroy it, so the button is absent rather than merely refused.
+  test "an admin may archive the project but is not shown the delete control" do
+    sign_in_as apollo_user(:admin)
+
+    get project_url(projects(:apollo))
+
+    assert_select "form[action=?]", archive_project_path(projects(:apollo))
+    assert_select "form[action=?] input[value=delete]", project_path(projects(:apollo)), count: 0
+  end
+
+  # The confirmation is the last thing between a wrong click and a cascade that
+  # reaches four levels down, so it has to name the cascade rather than ask "are
+  # you sure?".
+  test "the delete control confirms with what would be destroyed" do
+    sign_in_as apollo_user(:owner)
+
+    get project_url(projects(:apollo))
+
+    # Addressed by the delete form's own action: the Archive button beside it
+    # also carries a turbo-confirm, and it is the shorter, reversible one.
+    delete_form = css_select("form[action='#{project_path(projects(:apollo))}'][data-turbo-confirm]").sole
+    confirmation = delete_form["data-turbo-confirm"]
+    assert_includes confirmation, "Apollo"
+    assert_includes confirmation, "2 epics"
+    assert_includes confirmation, "3 stories"
+    assert_includes confirmation, "cannot be undone"
+  end
 end
