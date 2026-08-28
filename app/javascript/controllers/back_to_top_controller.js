@@ -7,7 +7,14 @@ import { Controller } from "@hotwired/stimulus"
 // Hidden with the `hidden` attribute rather than with opacity, so a button
 // nobody can see is not a tab stop either.
 export default class extends Controller {
-  static values = { threshold: { type: Number, default: 400 } }
+  // 200px is roughly the point where the project's own controls — Edit,
+  // Archive, Delete and the section nav — have scrolled off the top, which is
+  // when a way back starts earning its place.
+  //
+  // It was 400px, which was too high to ever fire. A backlog of eleven epics is
+  // about 1100px tall, so on any normal window it scrolls by 0-220px and never
+  // crossed it: the button was effectively dead code on real content.
+  static values = { threshold: { type: Number, default: 200 } }
 
   connect() {
     // Bound once and kept, so disconnect() removes the same function it added.
