@@ -1,7 +1,26 @@
 require "test_helper"
 
 class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
-  driven_by :selenium, using: :headless_chrome, screen_size: [ 1400, 1400 ]
+  # Chrome's password manager is switched off, and it is not paranoia.
+  #
+  # The browser is shared by every test in a run, and Capybara resets cookies
+  # between them but not Chrome's own credential store. Once one test signs in
+  # successfully, Chrome treats 127.0.0.1 as a site it has a saved password for
+  # and starts intervening in the sign-in form: the next test's fill_in on the
+  # password field reports success and leaves the field empty. The form then
+  # fails HTML5 required validation, the browser refuses to submit, and no
+  # request is ever made — which reads as "the flash never appeared" and was the
+  # last of this suite's intermittent sign-in failures.
+  #
+  # The field keeps autocomplete="current-password" in the app, because a real
+  # password manager is something users should have. This turns it off in the
+  # test browser only.
+  driven_by :selenium, using: :headless_chrome, screen_size: [ 1400, 1400 ] do |options|
+    options.add_preference("credentials_enable_service", false)
+    options.add_preference("profile.password_manager_enabled", false)
+    options.add_preference("profile.password_manager_leak_detection", false)
+    options.add_argument("--disable-features=PasswordManagerEnabled,AutofillServerCommunication,PasswordLeakDetection")
+  end
 
   # Capybara's 2s default is tight for a Turbo form submission round-tripping
   # through headless Chrome: the server answers a sign-in POST in ~260ms (bcrypt),
