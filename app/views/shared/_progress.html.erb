@@ -7,7 +7,9 @@
   <div role="progressbar" aria-valuenow="<%= progress.percent %>" aria-valuemin="0" aria-valuemax="100"
        aria-label="<%= label %>"
        class="h-2 w-full overflow-hidden rounded-full bg-slate-200">
-    <div class="h-full rounded-full bg-slate-900 transition-all motion-reduce:transition-none" style="width: <%= progress.percent %>%"></div>
+    <%# data-percent, not style="width:" — see .progress-fill in the stylesheet. %>
+    <div class="progress-fill h-full rounded-full bg-slate-900 transition-all motion-reduce:transition-none"
+         data-percent="<%= (progress.percent / 5.0).round * 5 %>"></div>
   </div>
   <p class="mt-2 text-sm text-slate-600"><%= label %></p>
 </div>

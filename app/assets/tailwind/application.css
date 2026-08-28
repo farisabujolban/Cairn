@@ -55,3 +55,36 @@
     scroll-behavior: auto !important;
   }
 }
+
+/*
+ * The progress bar's fill width.
+ *
+ * This was a style="width: 42%" attribute, which CSP governs through
+ * style-src-attr — and §5 rules out unsafe-inline, so the attribute had to go
+ * rather than the policy being widened for it. The width is selected by a data
+ * attribute instead, in 5% steps.
+ *
+ * Five percent is invisible on a bar two pixels high, and the exact counts are
+ * spelled out in the sentence beside it, which is the bar's accessible name.
+ */
+.progress-fill { width: 0; }
+.progress-fill[data-percent="5"] { width: 5%; }
+.progress-fill[data-percent="10"] { width: 10%; }
+.progress-fill[data-percent="15"] { width: 15%; }
+.progress-fill[data-percent="20"] { width: 20%; }
+.progress-fill[data-percent="25"] { width: 25%; }
+.progress-fill[data-percent="30"] { width: 30%; }
+.progress-fill[data-percent="35"] { width: 35%; }
+.progress-fill[data-percent="40"] { width: 40%; }
+.progress-fill[data-percent="45"] { width: 45%; }
+.progress-fill[data-percent="50"] { width: 50%; }
+.progress-fill[data-percent="55"] { width: 55%; }
+.progress-fill[data-percent="60"] { width: 60%; }
+.progress-fill[data-percent="65"] { width: 65%; }
+.progress-fill[data-percent="70"] { width: 70%; }
+.progress-fill[data-percent="75"] { width: 75%; }
+.progress-fill[data-percent="80"] { width: 80%; }
+.progress-fill[data-percent="85"] { width: 85%; }
+.progress-fill[data-percent="90"] { width: 90%; }
+.progress-fill[data-percent="95"] { width: 95%; }
+.progress-fill[data-percent="100"] { width: 100%; }
