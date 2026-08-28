@@ -5,13 +5,7 @@ require "application_system_test_case"
 # actually reachable, actually visible once it is, and actually moves focus.
 # Every one of those can be wrong while the markup looks right.
 class AccessibilityTest < ApplicationSystemTestCase
-  setup do
-    visit new_session_path
-    fill_in "Email address", with: users(:one).email_address
-    fill_in "Password", with: "password"
-    click_on "Sign in"
-    assert_text "Projects"
-  end
+  setup { sign_in_as users(:one) }
 
   # WCAG 2.4.1 end to end. A skip link that renders but sits behind the nav in
   # tab order, or that stays 1px wide when focused, has failed while passing

@@ -1,4 +1,8 @@
-<% password_digest = BCrypt::Password.create("password") %>
+<%# Verification cost comes from the stored digest, not from
+    config.active_model.secure_password.min_cost, so the fixtures have to say it
+    too. At the production cost of 12 this is ~230ms per sign-in, paid by every
+    system test — which is what made sign-in race Capybara's wait budget. %>
+<% password_digest = BCrypt::Password.create("password", cost: BCrypt::Engine::MIN_COST) %>
 
 # A system admin exists in every test run because sign-up is disabled: without
 # one, no fixture-based test could create the first user or project.

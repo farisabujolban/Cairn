@@ -27,6 +27,17 @@ Rails.application.configure do
   # sign-in form is throttled. General caching stays disabled above.
   config.action_controller.cache_store = :memory_store
 
+  # bcrypt at its production cost is ~230ms per verification, and every system
+  # test signs in. That was the largest single cost in the suite and the reason
+  # sign-in intermittently missed Capybara's wait budget — a real password check
+  # racing a browser round trip on every test.
+  #
+  # Set on the module rather than through config.active_model, which has no
+  # secure_password namespace. This governs digests the suite creates; the
+  # fixtures set the same cost on the digests they store, because verification
+  # cost comes from the stored hash and not from this setting.
+  ActiveModel::SecurePassword.min_cost = true
+
   # Render exception templates for rescuable exceptions and raise for other exceptions.
   config.action_dispatch.show_exceptions = :rescuable
 

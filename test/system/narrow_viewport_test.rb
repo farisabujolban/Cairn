@@ -27,12 +27,7 @@ class NarrowViewportTest < ApplicationSystemTestCase
     @project.epics.create!(title: @long_title, status: :in_progress,
                            description: "Instrument the whole launch sequence end to end")
 
-    visit new_session_path
-    fill_in "Email address", with: users(:one).email_address
-    fill_in "Password", with: "password"
-    click_on "Sign in"
-    assert_text "Projects"
-
+    sign_in_as users(:one)
     narrow_the_viewport
   end
 
