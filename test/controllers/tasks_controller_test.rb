@@ -236,4 +236,51 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :not_found
   end
+  # The backlog tree changes status in place, so the answer has to be the one
+  # control that changed. A redirect would hand the frame a whole page with no
+  # matching frame in it, and Turbo would blank the control instead.
+  test "an inline status change from the tree answers with the status control" do
+    sign_in_as apollo_user(:member)
+    record = tasks(:wire_the_clock)
+
+    patch project_task_url(projects(:apollo), tasks(:wire_the_clock)),
+          params: { task: { status: "done" } },
+          headers: { "Turbo-Frame" => dom_id(record, :status) }
+
+    assert_response :success
+    assert_equal "done", record.reload.status
+    assert_select "turbo-frame##{dom_id(record, :status)} select[name=?]", "task[status]"
+  end
+
+  # A rejected change has to answer inside the frame too, showing what is
+  # actually stored. Re-rendering the edit page there would replace one status
+  # select with an entire form, inside a control two lines high.
+  test "a rejected inline status change answers inside the frame" do
+    sign_in_as apollo_user(:member)
+    record = tasks(:wire_the_clock)
+    was = record.status
+
+    patch project_task_url(projects(:apollo), tasks(:wire_the_clock)),
+          params: { task: { status: "shipped-ish" } },
+          headers: { "Turbo-Frame" => dom_id(record, :status) }
+
+    assert_response :unprocessable_content
+    assert_equal was, record.reload.status
+    assert_select "turbo-frame##{dom_id(record, :status)}"
+  end
+
+  # A viewer reads the tree and changes nothing in it. The control is absent,
+  # and the request behind it is refused whether or not the control was shown.
+  test "a viewer is refused an inline status change" do
+    sign_in_as apollo_user(:viewer)
+    record = tasks(:wire_the_clock)
+    was = record.status
+
+    patch project_task_url(projects(:apollo), tasks(:wire_the_clock)),
+          params: { task: { status: "done" } },
+          headers: { "Turbo-Frame" => dom_id(record, :status) }
+
+    assert_response :forbidden
+    assert_equal was, record.reload.status
+  end
 end

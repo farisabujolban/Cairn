@@ -1,5 +1,6 @@
 class TasksController < ApplicationController
   include ProjectScoped
+  include InlineStatus
 
   before_action :set_story, only: %i[ index new create ]
   before_action :set_task, only: %i[ show edit update destroy ]
@@ -29,7 +30,12 @@ class TasksController < ApplicationController
   end
 
   def update
-    if @task.update(task_params)
+    saved = @task.update(task_params)
+    # The backlog tree's inline change lands here too, and answers with the one
+    # control rather than a redirect. See InlineStatus.
+    return if rendered_status_frame?(@task, saved)
+
+    if saved
       redirect_to project_task_path(@project, @task), notice: "Task updated."
     else
       render :edit, status: :unprocessable_content

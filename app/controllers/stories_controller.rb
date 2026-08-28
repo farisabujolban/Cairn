@@ -1,5 +1,6 @@
 class StoriesController < ApplicationController
   include ProjectScoped
+  include InlineStatus
 
   before_action :set_epic, only: %i[ index new create ]
   before_action :set_story, only: %i[ show edit update destroy ]
@@ -29,7 +30,12 @@ class StoriesController < ApplicationController
   end
 
   def update
-    if @story.update(story_params)
+    saved = @story.update(story_params)
+    # The backlog tree's inline change lands here too, and answers with the one
+    # control rather than a redirect. See InlineStatus.
+    return if rendered_status_frame?(@story, saved)
+
+    if saved
       redirect_to project_story_path(@project, @story), notice: "Story updated."
     else
       render :edit, status: :unprocessable_content
