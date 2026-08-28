@@ -106,6 +106,72 @@ class ProjectTest < ActiveSupport::TestCase
     assert_not projects(:apollo).archived?
   end
 
+  # Archiving has to be reversible from the model up: the project list filters
+  # to active, so a project with no way back is one the only screen that could
+  # restore it has already hidden.
+  test "archive! and restore! move a project in and out of the active listing" do
+    project = projects(:apollo)
+
+    project.archive!
+    assert project.archived?
+    assert_not_includes Project.active, project
+
+    project.restore!
+    assert_not project.archived?
+    assert_includes Project.active, project
+  end
+
+  # "Archived 3 days ago" is the only thing the archived listing says about a
+  # project. Re-stamping the timestamp on a second archive! would make that
+  # sentence lie every time someone pressed the button twice.
+  test "archive! leaves an already archived project's timestamp alone" do
+    project = projects(:archived)
+    archived_at = project.archived_at
+
+    project.archive!
+
+    assert_equal archived_at, project.reload.archived_at
+  end
+
+  # Archiving is a soft delete, not a revocation: the rows stay, the memberships
+  # stay, and anyone who could open the project before still can. Only the
+  # default listing changes.
+  test "archiving does not change who can see the project" do
+    project = projects(:apollo)
+    project.archive!
+
+    assert_includes Project.visible_to(users(:one)), project
+  end
+
+  # The backlog tree and the delete confirmation both ask the project for work
+  # two and three levels down. Reaching it through the epics keeps containment
+  # the single answer to "which project is this in" — a story_id column on
+  # projects would be a second answer that could disagree with the first.
+  test "reaches its stories and tasks through the epics" do
+    project = projects(:apollo)
+
+    assert_includes project.stories, stories(:countdown)
+    assert_includes project.tasks, tasks(:wire_the_clock)
+    assert_not_includes project.stories, stories(:gemini_docking)
+    assert_not_includes project.tasks, tasks(:gemini_latch)
+  end
+
+  # A bare "are you sure?" hides the size of the cascade behind the button. The
+  # confirmation has to name what goes with the project, so the counts come from
+  # the project rather than from whatever the person happens to have open.
+  test "contents counts everything a delete would take with the project" do
+    assert_equal({ "epic" => 2, "story" => 3, "task" => 2, "milestone" => 3, "member" => 4 },
+                 projects(:apollo).contents)
+  end
+
+  # "0 tasks" is noise in a sentence someone is reading to decide whether to
+  # stop. An empty project has nothing to warn about, and says so by being empty.
+  test "contents omits the levels that are empty" do
+    project = Project.create!(name: "Empty")
+
+    assert_equal({}, project.contents)
+  end
+
   # Memberships are meaningless without their project — an orphaned grant would
   # point at a project id that no longer resolves, which authorization code
   # would have to defend against forever.

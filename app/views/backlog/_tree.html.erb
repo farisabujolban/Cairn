@@ -1,0 +1,28 @@
+<%# The backlog tree: every epic in the project, its stories under it, its tasks
+    under those. §7's key screen, and the only one that shows containment whole
+    — everywhere else in the app reaching a task takes five navigations and you
+    can never see two epics at once.
+
+    Epics open and stories closed is the default on purpose. Open, the tree
+    answers "what is the state of this project" at the altitude people actually
+    ask it: every epic and every story at once. Tasks are the detail behind one
+    story, and expanding them all would bury the shape of the thing. %>
+<ul class="mt-4 space-y-2">
+  <% epics.each do |epic| %>
+    <%= render layout: "backlog/branch",
+          locals: { project: project, record: epic, children: epic.stories,
+                    child_label: "Stories", progress: epic.progress, expanded: true } do %>
+      <% epic.stories.each do |story| %>
+        <%= render layout: "backlog/branch",
+              locals: { project: project, record: story, children: story.tasks,
+                        child_label: "Tasks", progress: story.progress, expanded: false } do %>
+          <% story.tasks.each do |task| %>
+            <%= render "backlog/branch",
+                  project: project, record: task, children: [],
+                  child_label: "Tasks", progress: nil, expanded: false %>
+          <% end %>
+        <% end %>
+      <% end %>
+    <% end %>
+  <% end %>
+</ul>

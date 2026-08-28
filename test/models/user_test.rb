@@ -64,4 +64,43 @@ class UserTest < ActiveSupport::TestCase
     end
     assert_equal "owner", memberships(:apollo_owner).reload.role
   end
+  # The backlog tree builds one policy per row and every policy asks the same
+  # question: what role does this user hold in this project. Unanswered once,
+  # that is a membership query per row on the screen with the most rows in the
+  # app — the N+1 the tree's eager loading exists to prevent, arriving through
+  # authorization instead of through the view.
+  test "membership_in answers repeatedly without querying again" do
+    user = users(:one)
+    project = projects(:apollo)
+
+    assert_equal memberships(:apollo_owner), user.membership_in(project)
+
+    assert_no_queries do
+      3.times { assert_equal memberships(:apollo_owner), user.membership_in(project) }
+    end
+  end
+
+  # A non-member is an answer too. Caching only the hits would leave every
+  # viewer-less row querying on each ask, which is the same N+1 wearing a
+  # different hat.
+  test "membership_in caches the absence of a membership" do
+    user = users(:admin)
+
+    assert_nil user.membership_in(projects(:apollo))
+
+    assert_no_queries do
+      assert_nil user.membership_in(projects(:apollo))
+    end
+  end
+
+  # An unsaved project has no memberships to find, and asking the database for
+  # rows matching a nil id is a query whose answer is known in advance.
+  test "membership_in answers nil for an unsaved project without querying" do
+    user = users(:one)
+    unsaved = Project.new
+
+    assert_no_queries do
+      assert_nil user.membership_in(unsaved)
+    end
+  end
 end

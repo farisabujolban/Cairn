@@ -2,7 +2,7 @@
     is a picture of the sentence beneath it, so the sentence is the accessible
     name and nothing is announced twice. %>
 <% empty_label = local_assigns.fetch(:empty, "No #{unit} yet") %>
-<% label = progress.any? ? "#{progress} #{unit} done" : empty_label %>
+<% label = progress.any? ? progress_sentence(progress, unit) : empty_label %>
 <div class="mt-4">
   <div role="progressbar" aria-valuenow="<%= progress.percent %>" aria-valuemin="0" aria-valuemax="100"
        aria-label="<%= label %>"

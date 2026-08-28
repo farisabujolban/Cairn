@@ -28,7 +28,7 @@
               <p class="mt-1 text-sm text-slate-600"><%= story.description %></p>
             <% end %>
           </div>
-          <div class="shrink-0 text-right text-sm text-slate-600">
+          <div class="min-w-0 break-words text-right text-sm text-slate-600">
             <p><%= story.status.titleize %></p>
             <% if story.assignee %>
               <p class="mt-1 text-xs"><%= story.assignee.name %></p>

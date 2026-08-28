@@ -4,7 +4,16 @@ class Project < ApplicationRecord
   has_many :memberships, dependent: :destroy
   has_many :users, through: :memberships
   has_many :milestones, dependent: :destroy
-  has_many :epics, dependent: :destroy
+  # Ordered here rather than at each call site: position is the only meaningful
+  # order for epics under a project, and the backlog tree renders three levels from
+  # one eager-loaded query — it cannot call .ordered on a loaded association
+  # without re-querying every row it just fetched.
+  has_many :epics, -> { ordered }, dependent: :destroy
+  # Reached through the epics rather than stored again. Containment already
+  # answers which project a story or task is in, and a second answer could
+  # disagree with the first. No dependent: here — the epics already cascade.
+  has_many :stories, through: :epics
+  has_many :tasks, through: :stories
 
   normalizes :name, with: ->(n) { n.strip }
 
@@ -23,6 +32,35 @@ class Project < ApplicationRecord
   scope :archived, -> { where.not(archived_at: nil) }
 
   def archived? = archived_at.present?
+
+  # Archiving is a soft delete. The rows and the memberships stay exactly as
+  # they were; only the default listing changes, which is what makes this
+  # reversible where destroy is not.
+  #
+  # A second archive! is a no-op rather than a re-stamp: the archived listing
+  # says "archived 3 days ago", and that sentence must keep meaning when the
+  # project was archived, not when the button was last pressed.
+  def archive!
+    update!(archived_at: Time.current) unless archived?
+  end
+
+  def restore!
+    update!(archived_at: nil)
+  end
+
+  # What a delete takes with the project, for the confirmation that has to name
+  # the cascade rather than ask "are you sure?". Levels that are empty are left
+  # out: "0 tasks" is noise in a sentence someone is reading to decide whether
+  # to stop.
+  def contents
+    {
+      "epic" => epics.count,
+      "story" => stories.count,
+      "task" => tasks.count,
+      "milestone" => milestones.count,
+      "member" => memberships.count
+    }.reject { |_level, count| count.zero? }
+  end
 
   # The only sanctioned way past the one-owner rule. Both halves run in one
   # transaction so the project is never left with two owners or none.

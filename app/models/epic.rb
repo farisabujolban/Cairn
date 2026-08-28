@@ -4,7 +4,11 @@ class Epic < ApplicationRecord
 
   belongs_to :project
   belongs_to :milestone, optional: true
-  has_many :stories, dependent: :destroy
+  # Ordered here rather than at each call site: position is the only meaningful
+  # order for stories under a epic, and the backlog tree renders three levels from
+  # one eager-loaded query — it cannot call .ordered on a loaded association
+  # without re-querying every row it just fetched.
+  has_many :stories, -> { ordered }, dependent: :destroy
 
   # §3's progress bar: done stories over total stories. Status stays manual at
   # every level, so this reports what people set rather than rolling anything up.

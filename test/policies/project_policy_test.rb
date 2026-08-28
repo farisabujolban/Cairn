@@ -52,6 +52,18 @@ class ProjectPolicyTest < ActiveSupport::TestCase
     assert_not policy_for(apollo_user(:viewer)).archive?
   end
 
+  # Restoring is the other half of matrix row 5, not a row of its own. If the
+  # two could diverge, an admin could archive a project and then be unable to
+  # undo it — the one-way trip the archived listing exists to prevent.
+  test "restoring is permitted by exactly the roles that may archive" do
+    each_apollo_role do |role, user|
+      assert_equal policy_for(user).archive?, policy_for(user).restore?,
+                   "#{role} should have the same answer for archive? and restore?"
+    end
+
+    assert_not policy_for(non_member).restore?
+  end
+
   # Matrix row 6 — the two irreversible acts. An admin runs the project day to
   # day but cannot hand it away or destroy it; that stays with the one owner.
   test "only the owner may transfer ownership or delete the project" do

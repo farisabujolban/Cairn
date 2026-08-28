@@ -6,6 +6,13 @@ Rails.application.routes.draw do
   # path still carries :project_id, which is what ProjectScoped scopes the
   # lookup by, and no URL grows past two levels of nesting.
   resources :projects do
+    # Archiving is a state change on the project, not a nested resource of its
+    # own: there is nothing to list, show or edit, only a switch with two
+    # positions. Both sit at member level so the id is always in the path.
+    member do
+      patch :archive
+      patch :restore
+    end
     resources :memberships, only: %i[ index new create update destroy ]
     resources :milestones
     resources :epics do

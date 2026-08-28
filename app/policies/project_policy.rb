@@ -20,6 +20,12 @@ class ProjectPolicy < ApplicationPolicy
   # recoverable, which is why an admin may do it and deleting stays below.
   def archive? = administrator?
 
+  # The other half of row 5 rather than a row of its own. Archiving is only
+  # reversible if the people who can do it can also undo it; splitting these
+  # would turn the archive into the one-way trip the archived listing exists to
+  # prevent.
+  def restore? = archive?
+
   # Matrix row 6. Both of these can leave the team without a project or without
   # a way back into one, so they stop at the single owner.
   def transfer_ownership? = owner?

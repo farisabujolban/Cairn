@@ -1,0 +1,28 @@
+<%# Every labelled control in the app renders through here, so the label, the
+    error message and the wiring between them are written once (§7) rather than
+    per form and half-remembered.
+
+    aria-describedby is that wiring, and it is the part that is easy to skip:
+    without it a screen reader announces "Title, edit text, invalid" and never
+    reaches the sentence saying what was actually wrong. It is emitted only when
+    there is a message to point at — a describedby aimed at an element that was
+    never rendered is a dangling reference, which some readers announce as
+    nothing at all.
+
+    form.object is nil on the sign-in and password forms, which post to a URL
+    rather than to a model. Those still get the label and the focus ring; they
+    simply have no per-field errors to wire up. %>
+<% messages = form.object&.errors&.[](attribute) || [] %>
+<% error_id = "#{form.object_name}_#{attribute}_error" %>
+<% attributes = { class: field_classes(invalid: messages.any?) } %>
+<% attributes.merge!("aria-describedby": error_id, "aria-invalid": "true") if messages.any? %>
+
+<div>
+  <%= form.label attribute, local_assigns[:label], class: "block text-sm font-medium text-slate-900" %>
+  <div class="mt-1">
+    <%= yield attributes %>
+  </div>
+  <% if messages.any? %>
+    <p id="<%= error_id %>" class="mt-1 text-sm text-red-700"><%= messages.to_sentence.upcase_first %>.</p>
+  <% end %>
+</div>

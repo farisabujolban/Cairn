@@ -1,5 +1,6 @@
 class EpicsController < ApplicationController
   include ProjectScoped
+  include InlineStatus
 
   before_action :set_epic, only: %i[ show edit update destroy ]
 
@@ -28,7 +29,12 @@ class EpicsController < ApplicationController
   end
 
   def update
-    if @epic.update(epic_params)
+    saved = @epic.update(epic_params)
+    # The backlog tree's inline change lands here too, and answers with the one
+    # control rather than a redirect. See InlineStatus.
+    return if rendered_status_frame?(@epic, saved)
+
+    if saved
       redirect_to project_epic_path(@project, @epic), notice: "Epic updated."
     else
       render :edit, status: :unprocessable_content

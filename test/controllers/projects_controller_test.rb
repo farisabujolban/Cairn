@@ -187,4 +187,280 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :not_found
   end
+
+  # The default listing is the live work. An archived project still exists and
+  # is still readable, but it has been put away, and the list people open all
+  # day should not be where it stays.
+  test "index shows only active projects by default" do
+    sign_in_as users(:one)
+    projects(:apollo).archive!
+
+    get projects_url
+
+    assert_no_match(/#{projects(:apollo).name}/, response.body)
+    assert_match projects(:gemini).name, response.body
+  end
+
+  # The other half of the toggle. Without a screen that lists archived projects,
+  # archiving is a one-way trip: the project is hidden from the only list that
+  # could bring it back.
+  test "index lists the archived projects when asked for them" do
+    sign_in_as users(:one)
+    projects(:apollo).archive!
+
+    get projects_url(status: "archived")
+
+    assert_response :success
+    assert_match projects(:apollo).name, response.body
+    assert_no_match(/#{projects(:gemini).name}/, response.body)
+  end
+
+  # The archived listing is a filter on the same scope, not a way around it.
+  # Mercury is archived and belongs to nobody, so membership must still decide.
+  test "index does not leak archived projects the user is not a member of" do
+    sign_in_as users(:one)
+
+    get projects_url(status: "archived")
+
+    assert_response :success
+    assert_no_match(/#{projects(:archived).name}/, response.body)
+  end
+
+  # An unrecognised filter value must fall back to the live list rather than
+  # being passed to the model — the parameter names a scope, and only these two
+  # scopes may be named.
+  test "index falls back to the active listing for an unknown status" do
+    sign_in_as users(:one)
+    projects(:apollo).archive!
+
+    get projects_url(status: "destroy_all")
+
+    assert_response :success
+    assert_no_match(/#{projects(:apollo).name}/, response.body)
+  end
+
+  # Matrix row 5. Archiving lands on the archived listing rather than the active
+  # one, so the person who just archived sees where the project went and that
+  # Restore is sitting next to it.
+  test "archive puts the project away for an admin" do
+    sign_in_as apollo_user(:admin)
+
+    patch archive_project_url(projects(:apollo))
+
+    assert_redirected_to projects_path(status: "archived")
+    assert projects(:apollo).reload.archived?
+  end
+
+  # A member files epics all day and still cannot put the whole project away —
+  # the same line the matrix draws for renaming it.
+  test "archive is forbidden for a member" do
+    sign_in_as apollo_user(:member)
+
+    patch archive_project_url(projects(:apollo))
+
+    assert_response :forbidden
+    assert_not projects(:apollo).reload.archived?
+  end
+
+  test "archive returns 404 for a non-member rather than revealing the project" do
+    sign_in_as users(:admin)
+
+    patch archive_project_url(projects(:apollo))
+
+    assert_response :not_found
+    assert_not projects(:apollo).reload.archived?
+  end
+
+  # The return trip, which is what makes archiving reversible rather than a soft
+  # delete nobody can undo.
+  test "restore brings the project back for an admin" do
+    sign_in_as apollo_user(:admin)
+    projects(:apollo).archive!
+
+    patch restore_project_url(projects(:apollo))
+
+    assert_redirected_to project_path(projects(:apollo))
+    assert_not projects(:apollo).reload.archived?
+  end
+
+  test "restore is forbidden for a member" do
+    sign_in_as apollo_user(:member)
+    projects(:apollo).archive!
+
+    patch restore_project_url(projects(:apollo))
+
+    assert_response :forbidden
+    assert projects(:apollo).reload.archived?
+  end
+
+  # Matrix row 6, and the route that has been a 404 since phase 1: DELETE was
+  # routed with no action behind it.
+  test "destroy deletes the project and its contents for the owner" do
+    sign_in_as apollo_user(:owner)
+
+    # Counted at two levels: the cascade is the whole reason this row stops at
+    # the owner, so a delete that took the project and left its epics behind
+    # would be a worse bug than one that refused.
+    assert_difference -> { Project.count } => -1, -> { Epic.count } => -2,
+                      -> { Story.count } => -3, -> { Task.count } => -2 do
+      delete project_url(projects(:apollo))
+    end
+
+    assert_redirected_to projects_path
+  end
+
+  # The cascade is the reason this stops at the owner: an admin deleting a
+  # project takes every epic, story and task in it, and nobody can undo that.
+  test "destroy is forbidden for a project admin" do
+    sign_in_as apollo_user(:admin)
+
+    assert_no_difference -> { Project.count } do
+      delete project_url(projects(:apollo))
+    end
+
+    assert_response :forbidden
+  end
+
+  test "destroy returns 404 for a non-member rather than revealing the project" do
+    sign_in_as users(:admin)
+
+    assert_no_difference -> { Project.count } do
+      delete project_url(projects(:apollo))
+    end
+
+    assert_response :not_found
+  end
+
+  # The way back has to be on the screen, not just in the routes file. An
+  # archived project the user can restore is useless if the listing shows it
+  # without a control.
+  test "the archived listing offers a restore button" do
+    sign_in_as apollo_user(:admin)
+    projects(:apollo).archive!
+
+    get projects_url(status: "archived")
+
+    assert_select "form[action=?][method=post]", restore_project_path(projects(:apollo))
+  end
+
+  # A control that appears when the request behind it would be refused teaches
+  # people the app is broken. Both halves ask the same policy, so both change
+  # together.
+  test "a member is shown neither the archive nor the delete control" do
+    sign_in_as apollo_user(:member)
+
+    get project_url(projects(:apollo))
+
+    assert_response :success
+    assert_select "form[action=?]", archive_project_path(projects(:apollo)), count: 0
+    # Scoped to this project's path: the layout's own Sign out button is a
+    # DELETE too, and an unscoped selector would match it and pass regardless.
+    assert_select "form[action=?] input[value=delete]", project_path(projects(:apollo)), count: 0
+  end
+
+  # Matrix row 6 in the markup: an admin runs the project day to day and still
+  # cannot destroy it, so the button is absent rather than merely refused.
+  test "an admin may archive the project but is not shown the delete control" do
+    sign_in_as apollo_user(:admin)
+
+    get project_url(projects(:apollo))
+
+    assert_select "form[action=?]", archive_project_path(projects(:apollo))
+    assert_select "form[action=?] input[value=delete]", project_path(projects(:apollo)), count: 0
+  end
+
+  # The confirmation is the last thing between a wrong click and a cascade that
+  # reaches four levels down, so it has to name the cascade rather than ask "are
+  # you sure?".
+  test "the delete control confirms with what would be destroyed" do
+    sign_in_as apollo_user(:owner)
+
+    get project_url(projects(:apollo))
+
+    # Addressed by the delete form's own action: the Archive button beside it
+    # also carries a turbo-confirm, and it is the shorter, reversible one.
+    delete_form = css_select("form[action='#{project_path(projects(:apollo))}'][data-turbo-confirm]").sole
+    confirmation = delete_form["data-turbo-confirm"]
+    assert_includes confirmation, "Apollo"
+    assert_includes confirmation, "2 epics"
+    assert_includes confirmation, "3 stories"
+    assert_includes confirmation, "cannot be undone"
+  end
+  # §7's key screen. Every other list in the app shows one level at a time —
+  # reaching a task means five navigations and you can never see two epics at
+  # once — so the one screen that shows containment whole is the project page.
+  test "show renders all three levels of the backlog tree" do
+    sign_in_as users(:one)
+
+    get project_url(projects(:apollo))
+
+    assert_response :success
+    assert_match epics(:launch).title, response.body
+    assert_match stories(:countdown).title, response.body
+    assert_match tasks(:wire_the_clock).title, response.body
+  end
+
+  # The tree has more rows than any other screen, so it is the one place an N+1
+  # actually hurts. Asserted as "does not grow with the tree" rather than as a
+  # fixed number, which would only be a change detector.
+  test "the backlog tree does not query per row" do
+    sign_in_as users(:one)
+    get project_url(projects(:apollo))
+
+    before = queries_for { get project_url(projects(:apollo)) }
+
+    epic = projects(:apollo).epics.create!(title: "Added epic")
+    3.times do |n|
+      story = epic.stories.create!(title: "Added story #{n}")
+      3.times { |m| story.tasks.create!(title: "Added task #{m}") }
+    end
+
+    assert_equal before, queries_for { get project_url(projects(:apollo)) },
+      "the tree gained queries when it gained rows, so something in it queries per row"
+  end
+
+  # Membership decides what the tree contains, the same as every other listing.
+  # A tree is a tempting place to reach past the scope because the rows are
+  # nested, and nesting is not authorization.
+  test "the backlog tree shows nothing from another project" do
+    sign_in_as users(:one)
+
+    get project_url(projects(:apollo))
+
+    assert_no_match(/#{epics(:gemini_rendezvous).title}/, response.body)
+    assert_no_match(/#{stories(:gemini_docking).title}/, response.body)
+  end
+
+  # A project with no epics is the first thing a new team sees, so it says what
+  # to do rather than rendering an empty box.
+  test "the backlog tree offers an empty state when the project has no epics" do
+    sign_in_as users(:one)
+    projects(:apollo).epics.destroy_all
+
+    get project_url(projects(:apollo))
+
+    assert_response :success
+    assert_select "a[href=?]", new_project_epic_path(projects(:apollo))
+  end
+
+  # "0 of 1 stories done" is the kind of wrong that makes a screen look
+  # unfinished, and the tree puts this label on every row with children.
+  test "the tree pluralizes progress on the count it reports" do
+    sign_in_as users(:one)
+
+    get project_url(projects(:apollo))
+
+    # Telemetry pipeline holds one story; Launch sequence holds two.
+    assert_match "0 of 1 story done", response.body
+    assert_match "0 of 2 stories done", response.body
+  end
+
+  private
+    def queries_for
+      count = 0
+      counter = ->(*, payload) { count += 1 unless payload[:name].in?([ "SCHEMA", "TRANSACTION" ]) }
+
+      ActiveSupport::Notifications.subscribed(counter, "sql.active_record") { yield }
+      count
+    end
 end

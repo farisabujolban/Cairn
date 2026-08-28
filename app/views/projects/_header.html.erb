@@ -1,0 +1,46 @@
+<%# The project's own controls, kept in one partial so the body below can change
+    without disturbing them. Each control asks the policy for its own action
+    rather than sharing one role check, so the two can diverge later without the
+    view lying about what the button behind it would do. %>
+<div class="mt-4 flex flex-wrap items-start justify-between gap-4">
+  <div class="min-w-0 flex-1 basis-64 break-words">
+    <h1 class="text-2xl font-semibold text-slate-900"><%= project.name %></h1>
+    <% if project.archived? %>
+      <p class="mt-1 text-sm text-slate-600">
+        Archived <%= time_ago_in_words(project.archived_at) %> ago. Restore it to start working on it again.
+      </p>
+    <% end %>
+  </div>
+
+  <%# Not shrink-0: with three controls in it, refusing to shrink pushes the
+      group past the right edge on a narrow viewport instead of letting
+      flex-wrap do its job. %>
+  <div class="flex flex-wrap items-center gap-2">
+    <% if policy(project).edit? %>
+      <%= link_to "Edit", edit_project_path(project),
+            class: "rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900" %>
+    <% end %>
+
+    <% if project.archived? %>
+      <% if policy(project).restore? %>
+        <%= button_to "Restore", restore_project_path(project), method: :patch,
+              class: "cursor-pointer rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900" %>
+      <% end %>
+    <% elsif policy(project).archive? %>
+      <%# Archiving is reversible, so the confirmation only has to say where the
+          project goes — not warn. The sentence names the way back. %>
+      <%= button_to "Archive", archive_project_path(project), method: :patch,
+            form: { data: { turbo_confirm: "Archive #{project.name}? It leaves the project list until someone restores it." } },
+            class: "cursor-pointer rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900" %>
+    <% end %>
+
+    <% if policy(project).destroy? %>
+      <%# Deleting is not reversible and reaches four levels down, so the
+          confirmation counts what goes with it rather than asking "are you
+          sure?" — see ApplicationHelper#deletion_warning. %>
+      <%= button_to "Delete", project_path(project), method: :delete,
+            form: { data: { turbo_confirm: deletion_warning(project) } },
+            class: "cursor-pointer rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600" %>
+    <% end %>
+  </div>
+</div>

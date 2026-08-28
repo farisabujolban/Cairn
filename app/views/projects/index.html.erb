@@ -1,29 +1,63 @@
-<% content_for :title, "Projects" %>
+<% heading = @showing_archived ? "Archived projects" : "Projects" %>
+<% content_for :title, heading %>
 
 <div class="mx-auto max-w-3xl px-4 py-8">
   <div class="flex flex-wrap items-center justify-between gap-4">
-    <h1 class="text-2xl font-semibold text-slate-900">Projects</h1>
+    <h1 class="text-2xl font-semibold text-slate-900"><%= heading %></h1>
     <% if Current.user.system_admin? %>
       <%= link_to "New project", new_project_path,
             class: "rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900" %>
     <% end %>
   </div>
 
+  <%# Both halves of the archive sit one click apart, so putting a project away
+      is never a one-way trip: the list that can bring it back is named on the
+      very screen it disappears from. aria-current marks which half is showing,
+      because "this tab is selected" is otherwise carried by colour alone. %>
+  <nav class="mt-6" aria-label="Project status">
+    <ul class="inline-flex flex-wrap gap-1 rounded-md border border-slate-200 bg-white p-1 text-sm">
+      <% [ [ "Active", nil ], [ "Archived", "archived" ] ].each do |label, status| %>
+        <% showing = status.present? == @showing_archived %>
+        <li>
+          <%= link_to label, projects_path(status: status),
+                aria: { current: ("page" if showing) },
+                class: class_names(
+                  "block rounded px-3 py-1.5 font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900",
+                  "bg-slate-900 text-white" => showing,
+                  "text-slate-600 hover:bg-slate-100 hover:text-slate-900" => !showing) %>
+        </li>
+      <% end %>
+    </ul>
+  </nav>
+
   <% if @projects.any? %>
     <ul class="mt-6 divide-y divide-slate-200 rounded-md border border-slate-200 bg-white">
       <% @projects.each do |project| %>
-        <li class="relative p-4 first:rounded-t-md last:rounded-b-md transition-colors hover:bg-slate-50 hover:inset-ring-1 hover:inset-ring-slate-300 focus-within:bg-slate-50 focus-within:inset-ring-2 focus-within:inset-ring-slate-900">
-          <%# The title carries a full-card overlay so the whole row is one click target. %>
-          <%= link_to project.name, project, class: "font-medium text-slate-900 after:absolute after:inset-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" %>
-          <% if project.description.present? %>
-            <p class="mt-1 text-sm text-slate-600"><%= project.description %></p>
+        <li class="relative flex flex-wrap items-center justify-between gap-x-4 gap-y-3 p-4 first:rounded-t-md last:rounded-b-md transition-colors hover:bg-slate-50 hover:inset-ring-1 hover:inset-ring-slate-300 focus-within:bg-slate-50 focus-within:inset-ring-2 focus-within:inset-ring-slate-900">
+          <div class="min-w-0 flex-1 basis-48 break-words">
+            <%# The title carries a full-card overlay so the whole row is one click target. %>
+            <%= link_to project.name, project, class: "font-medium text-slate-900 after:absolute after:inset-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" %>
+            <% if project.archived? %>
+              <p class="mt-1 text-sm text-slate-600">Archived <%= time_ago_in_words(project.archived_at) %> ago</p>
+            <% elsif project.description.present? %>
+              <p class="mt-1 text-sm text-slate-600"><%= project.description %></p>
+            <% end %>
+          </div>
+
+          <% if project.archived? && policy(project).restore? %>
+            <%# z-10 lifts this above the title's full-card overlay, which would
+                otherwise sit on top of the button and swallow the click. %>
+            <div class="relative z-10 shrink-0">
+              <%= button_to "Restore", restore_project_path(project), method: :patch,
+                    class: "cursor-pointer rounded-md border border-slate-300 px-3 py-1 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:border-slate-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900" %>
+            </div>
           <% end %>
         </li>
       <% end %>
     </ul>
   <% else %>
     <p class="mt-6 rounded-md border border-dashed border-slate-300 p-8 text-center text-slate-600">
-      You are not a member of any project yet.
+      <%= @showing_archived ? "No projects have been archived." : "You are not a member of any project yet." %>
     </p>
   <% end %>
 </div>

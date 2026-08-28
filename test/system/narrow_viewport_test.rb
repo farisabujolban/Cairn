@@ -16,6 +16,12 @@ class NarrowViewportTest < ApplicationSystemTestCase
   # was found. Chrome clamps its *window* far above this, so the viewport is set
   # through CDP; resize_to would silently give a much wider page and prove
   # nothing.
+  #
+  # 200 is the assertion, but the layout is kept working at 150. An element's
+  # intrinsic minimum width depends on the font, and CI's fonts are wider than
+  # macOS's — the backlog tree passed this locally and overflowed by 12px on
+  # Linux. Headroom, not the exact number, is what makes this test mean the same
+  # thing on both.
   NARROW_WIDTH = 200
 
   setup do
@@ -27,12 +33,7 @@ class NarrowViewportTest < ApplicationSystemTestCase
     @project.epics.create!(title: @long_title, status: :in_progress,
                            description: "Instrument the whole launch sequence end to end")
 
-    visit new_session_path
-    fill_in "Email address", with: users(:one).email_address
-    fill_in "Password", with: "password"
-    click_on "Sign in"
-    assert_text "Projects"
-
+    sign_in_as users(:one)
     narrow_the_viewport
   end
 
@@ -48,6 +49,34 @@ class NarrowViewportTest < ApplicationSystemTestCase
     assert_text @long_title
 
     assert_nothing_overflows "the epic list"
+  end
+
+  # The backlog tree is the hardest case in the app: three levels of indentation
+  # eating horizontal space, a status select that cannot shrink below its widest
+  # option, and the project's own controls above it. Every one of those pushes
+  # right at exactly the width this test renders.
+  test "the backlog tree stays inside the viewport at every level" do
+    epic = @project.epics.create!(title: @long_title, status: :todo)
+    story = epic.stories.create!(title: @long_title, status: :in_progress)
+    story.tasks.create!(title: @long_title, status: :blocked)
+
+    visit project_path(@project)
+    click_on "Tasks in #{story.title}"
+    assert_text @long_title
+
+    assert_nothing_overflows "the backlog tree"
+  end
+
+  # The project list gained a status toggle and a Restore button in the same row
+  # as the project name, which is the shape that overflowed twice before.
+  test "the archived project list stays inside the viewport" do
+    @project.update!(name: @long_title)
+    @project.archive!
+
+    visit projects_path(status: "archived")
+    assert_text @long_title
+
+    assert_nothing_overflows "the archived project list"
   end
 
   private
