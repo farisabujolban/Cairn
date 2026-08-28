@@ -25,6 +25,22 @@
 
   <body class="min-h-screen bg-slate-50 text-slate-900">
     <% if authenticated? %>
+      <%# WCAG 2.4.1, and the first element in the body because that is the
+          whole of the job: a skip link the first Tab does not reach has already
+          failed. Hidden until focused, so it costs sighted users nothing.
+          Rendered only alongside the header — on the sign-in page there is no
+          navigation to skip, and a link offering to skip nothing is a keyboard
+          stop that saves nobody anything.
+
+          data-turbo="false" is load-bearing, not caution. Turbo Drive
+          intercepts the fragment link and scrolls the page itself, which skips
+          the browser step that moves focus to the target — so the link looks
+          like it works, and the next Tab goes straight back to the nav it was
+          supposed to skip past. Handing the link back to the browser is what
+          makes the jump real. A system test pins it. %>
+      <%= link_to "Skip to main content", "#main", data: { turbo: false },
+            class: "sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-slate-900 focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white" %>
+
       <header class="border-b border-slate-200 bg-white">
         <nav class="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
           <%= link_to "Project Tracker", root_path, class: "font-semibold text-slate-900" %>
@@ -47,7 +63,10 @@
       </div>
     <% end %>
 
-    <main>
+    <%# The skip link's target. tabindex="-1" is what makes the jump actually
+        move focus: without it the browser scrolls to the landmark and leaves
+        focus behind on the link, so the next Tab returns to the nav. %>
+    <main id="main" tabindex="-1">
       <%= yield %>
     </main>
   </body>

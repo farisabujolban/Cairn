@@ -20,3 +20,24 @@
     transition: none;
   }
 }
+
+/*
+ * prefers-reduced-motion, honoured for everything at once (§7).
+ *
+ * The motion-reduce: variants on individual elements say what a template
+ * intends, and they are kept, but they rot: the next template forgets one and
+ * nothing catches it. This block is the guarantee underneath them.
+ *
+ * Durations collapse to 0.01ms rather than to none so that transitionend still
+ * fires — "none" silently breaks anything waiting on that event.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
