@@ -12,7 +12,10 @@
     <% end %>
   </div>
 
-  <div class="flex shrink-0 flex-wrap items-center gap-2">
+  <%# Not shrink-0: with three controls in it, refusing to shrink pushes the
+      group past the right edge on a narrow viewport instead of letting
+      flex-wrap do its job. %>
+  <div class="flex flex-wrap items-center gap-2">
     <% if policy(project).edit? %>
       <%= link_to "Edit", edit_project_path(project),
             class: "rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900" %>

@@ -45,6 +45,34 @@ class NarrowViewportTest < ApplicationSystemTestCase
     assert_nothing_overflows "the epic list"
   end
 
+  # The backlog tree is the hardest case in the app: three levels of indentation
+  # eating horizontal space, a status select that cannot shrink below its widest
+  # option, and the project's own controls above it. Every one of those pushes
+  # right at exactly the width this test renders.
+  test "the backlog tree stays inside the viewport at every level" do
+    epic = @project.epics.create!(title: @long_title, status: :todo)
+    story = epic.stories.create!(title: @long_title, status: :in_progress)
+    story.tasks.create!(title: @long_title, status: :blocked)
+
+    visit project_path(@project)
+    click_on "Tasks in #{story.title}"
+    assert_text @long_title
+
+    assert_nothing_overflows "the backlog tree"
+  end
+
+  # The project list gained a status toggle and a Restore button in the same row
+  # as the project name, which is the shape that overflowed twice before.
+  test "the archived project list stays inside the viewport" do
+    @project.update!(name: @long_title)
+    @project.archive!
+
+    visit projects_path(status: "archived")
+    assert_text @long_title
+
+    assert_nothing_overflows "the archived project list"
+  end
+
   private
     def narrow_the_viewport
       page.driver.browser.execute_cdp("Emulation.setDeviceMetricsOverride",
