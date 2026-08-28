@@ -40,4 +40,17 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_includes warning, "cannot be undone"
     assert_not_includes warning, "destroys"
   end
+  # String#pluralize(1) returns its receiver untouched, assuming a singular one,
+  # and every caller names its unit in the plural. Without the singularize step
+  # the sentence reads "0 of 1 stories done" on the app's busiest screen.
+  test "progress_sentence agrees a plural unit with a count of one" do
+    assert_equal "0 of 1 story done", progress_sentence(Progress.new(done: 0, total: 1), "stories")
+    assert_equal "1 of 2 tasks done", progress_sentence(Progress.new(done: 1, total: 2), "tasks")
+  end
+
+  # The tree names its units in title case for the button label beside them, so
+  # the sentence lowercases rather than each caller remembering to.
+  test "progress_sentence lowercases the unit it is given" do
+    assert_equal "0 of 3 stories done", progress_sentence(Progress.new(done: 0, total: 3), "Stories")
+  end
 end

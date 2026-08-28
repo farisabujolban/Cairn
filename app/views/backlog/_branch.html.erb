@@ -29,7 +29,7 @@
       <%= link_to record.title, [ project, record ],
             class: "font-medium text-slate-900 transition-colors hover:text-slate-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" %>
       <% if progress&.any? %>
-        <p class="text-xs text-slate-500"><%= progress %> <%= child_label.downcase %> done</p>
+        <p class="text-xs text-slate-500"><%= progress_sentence(progress, child_label) %></p>
       <% end %>
     </div>
 

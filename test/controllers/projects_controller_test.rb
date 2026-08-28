@@ -443,6 +443,18 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", new_project_epic_path(projects(:apollo))
   end
 
+  # "0 of 1 stories done" is the kind of wrong that makes a screen look
+  # unfinished, and the tree puts this label on every row with children.
+  test "the tree pluralizes progress on the count it reports" do
+    sign_in_as users(:one)
+
+    get project_url(projects(:apollo))
+
+    # Telemetry pipeline holds one story; Launch sequence holds two.
+    assert_match "0 of 1 story done", response.body
+    assert_match "0 of 2 stories done", response.body
+  end
+
   private
     def queries_for
       count = 0

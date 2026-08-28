@@ -15,6 +15,17 @@ module ApplicationHelper
     "Delete #{project.name}? This permanently destroys #{destroyed}. #{ending}"
   end
 
+  # "0 of 1 stories done" is the kind of wrong that makes a screen look
+  # unfinished, and the backlog tree puts this label on every row with children.
+  #
+  # The singularize is not redundant: String#pluralize(1) returns the receiver
+  # untouched because it assumes a singular receiver, and every caller here
+  # names its unit in the plural — "stories", "tasks". The word is reduced to
+  # its singular first and then agreed with the count.
+  def progress_sentence(progress, unit)
+    "#{progress} #{unit.downcase.singularize.pluralize(progress.total)} done"
+  end
+
   # One input style for every form in the app, so the focus ring §7 requires is
   # not something each form has to remember separately — and so an invalid field
   # reads as invalid to someone who cannot hear aria-invalid.

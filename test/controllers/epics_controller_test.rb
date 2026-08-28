@@ -306,4 +306,13 @@ class EpicsControllerTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
     assert_equal was, record.reload.status
   end
+  # The same label the tree uses, on the detail page. Both go through the shared
+  # progress partial, so the pluralization belongs there rather than in either.
+  test "the progress bar pluralizes its unit on the count" do
+    sign_in_as users(:one)
+
+    get project_epic_url(projects(:apollo), epics(:telemetry))
+
+    assert_match "0 of 1 story done", response.body
+  end
 end
