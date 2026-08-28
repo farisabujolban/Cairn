@@ -106,6 +106,43 @@ class ProjectTest < ActiveSupport::TestCase
     assert_not projects(:apollo).archived?
   end
 
+  # Archiving has to be reversible from the model up: the project list filters
+  # to active, so a project with no way back is one the only screen that could
+  # restore it has already hidden.
+  test "archive! and restore! move a project in and out of the active listing" do
+    project = projects(:apollo)
+
+    project.archive!
+    assert project.archived?
+    assert_not_includes Project.active, project
+
+    project.restore!
+    assert_not project.archived?
+    assert_includes Project.active, project
+  end
+
+  # "Archived 3 days ago" is the only thing the archived listing says about a
+  # project. Re-stamping the timestamp on a second archive! would make that
+  # sentence lie every time someone pressed the button twice.
+  test "archive! leaves an already archived project's timestamp alone" do
+    project = projects(:archived)
+    archived_at = project.archived_at
+
+    project.archive!
+
+    assert_equal archived_at, project.reload.archived_at
+  end
+
+  # Archiving is a soft delete, not a revocation: the rows stay, the memberships
+  # stay, and anyone who could open the project before still can. Only the
+  # default listing changes.
+  test "archiving does not change who can see the project" do
+    project = projects(:apollo)
+    project.archive!
+
+    assert_includes Project.visible_to(users(:one)), project
+  end
+
   # Memberships are meaningless without their project — an orphaned grant would
   # point at a project id that no longer resolves, which authorization code
   # would have to defend against forever.

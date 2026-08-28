@@ -24,6 +24,21 @@ class Project < ApplicationRecord
 
   def archived? = archived_at.present?
 
+  # Archiving is a soft delete. The rows and the memberships stay exactly as
+  # they were; only the default listing changes, which is what makes this
+  # reversible where destroy is not.
+  #
+  # A second archive! is a no-op rather than a re-stamp: the archived listing
+  # says "archived 3 days ago", and that sentence must keep meaning when the
+  # project was archived, not when the button was last pressed.
+  def archive!
+    update!(archived_at: Time.current) unless archived?
+  end
+
+  def restore!
+    update!(archived_at: nil)
+  end
+
   # The only sanctioned way past the one-owner rule. Both halves run in one
   # transaction so the project is never left with two owners or none.
   def transfer_ownership_to!(user)
