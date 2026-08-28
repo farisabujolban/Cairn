@@ -1,0 +1,30 @@
+<%# Status changed where it is read (§7). Wrapped in a Turbo Frame so the change
+    replaces this one control rather than reloading a tree that may be forty
+    rows long with half of them collapsed.
+
+    The select is the whole control: there is no Save button for anyone with
+    JavaScript, because a two-step change repeated down a long list is the
+    friction this exists to remove. A real submit button is kept for the case
+    where the Stimulus controller never loads — then Turbo is not running
+    either, the form posts normally, and the update action redirects.
+
+    A viewer sees the status as text. Both halves ask the same policy, so the
+    control appears exactly when the request behind it would be allowed. %>
+<%= turbo_frame_tag dom_id(record, :status) do %>
+  <% if policy(record).update? %>
+    <%= form_with model: record, url: [ project, record ], method: :patch,
+          data: { controller: "autosubmit" }, class: "flex items-center gap-1" do |form| %>
+      <%# The visible heading of this row is the record's title, so the select
+          needs a name of its own for anyone not reading the row visually. %>
+      <%= form.label :status, "Status for #{record.title}", class: "sr-only" %>
+      <%= form.select :status, WorkItemStatus::STATUSES.map { |status| [ status.titleize, status ] }, {},
+            class: "rounded-md border border-slate-300 bg-white px-2 py-1 text-sm text-slate-700 transition-colors hover:border-slate-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900",
+            data: { action: "change->autosubmit#submit" } %>
+      <noscript>
+        <%= form.submit "Save", class: "cursor-pointer rounded-md border border-slate-300 px-2 py-1 text-sm font-medium text-slate-700" %>
+      </noscript>
+    <% end %>
+  <% else %>
+    <p class="px-2 py-1 text-sm text-slate-600"><%= record.status.titleize %></p>
+  <% end %>
+<% end %>

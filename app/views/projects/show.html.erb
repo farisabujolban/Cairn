@@ -7,7 +7,7 @@
 
   <p class="mt-2 text-slate-600"><%= @project.description %></p>
 
-  <nav class="mt-6 flex flex-wrap gap-3 border-t border-slate-200 pt-6 text-sm">
+  <nav class="mt-6 flex flex-wrap gap-3 border-t border-slate-200 pt-6 text-sm" aria-label="Project sections">
     <%= link_to "Epics", project_epics_path(@project),
           class: "rounded-md border border-slate-300 px-3 py-2 font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" %>
     <%= link_to "Milestones", project_milestones_path(@project),
@@ -17,4 +17,29 @@
     <%= link_to "Members", project_memberships_path(@project),
           class: "rounded-md border border-slate-300 px-3 py-2 font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" %>
   </nav>
+
+  <div class="mt-8 flex flex-wrap items-center justify-between gap-4">
+    <h2 class="text-lg font-semibold text-slate-900">Backlog</h2>
+    <%# Asked of the policy rather than of a role list, so the button appears
+        exactly when the submission behind it would be allowed. %>
+    <% if policy(@project.epics.new).new? %>
+      <%= link_to "New epic", new_project_epic_path(@project),
+            class: "rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900" %>
+    <% end %>
+  </div>
+
+  <% if @epics.any? %>
+    <%= render "backlog/tree", project: @project, epics: @epics %>
+  <% else %>
+    <div class="mt-4 rounded-md border border-dashed border-slate-300 p-8 text-center">
+      <p class="text-slate-600">This project has no epics yet.</p>
+      <% if policy(@project.epics.new).new? %>
+        <p class="mt-2 text-sm text-slate-600">
+          <%= link_to "Add the first one", new_project_epic_path(@project),
+                class: "font-medium text-slate-900 underline transition-colors hover:text-slate-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" %>
+          to start the backlog.
+        </p>
+      <% end %>
+    </div>
+  <% end %>
 </div>

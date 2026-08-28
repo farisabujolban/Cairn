@@ -386,4 +386,69 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     assert_includes confirmation, "3 stories"
     assert_includes confirmation, "cannot be undone"
   end
+  # §7's key screen. Every other list in the app shows one level at a time —
+  # reaching a task means five navigations and you can never see two epics at
+  # once — so the one screen that shows containment whole is the project page.
+  test "show renders all three levels of the backlog tree" do
+    sign_in_as users(:one)
+
+    get project_url(projects(:apollo))
+
+    assert_response :success
+    assert_match epics(:launch).title, response.body
+    assert_match stories(:countdown).title, response.body
+    assert_match tasks(:wire_the_clock).title, response.body
+  end
+
+  # The tree has more rows than any other screen, so it is the one place an N+1
+  # actually hurts. Asserted as "does not grow with the tree" rather than as a
+  # fixed number, which would only be a change detector.
+  test "the backlog tree does not query per row" do
+    sign_in_as users(:one)
+    get project_url(projects(:apollo))
+
+    before = queries_for { get project_url(projects(:apollo)) }
+
+    epic = projects(:apollo).epics.create!(title: "Added epic")
+    3.times do |n|
+      story = epic.stories.create!(title: "Added story #{n}")
+      3.times { |m| story.tasks.create!(title: "Added task #{m}") }
+    end
+
+    assert_equal before, queries_for { get project_url(projects(:apollo)) },
+      "the tree gained queries when it gained rows, so something in it queries per row"
+  end
+
+  # Membership decides what the tree contains, the same as every other listing.
+  # A tree is a tempting place to reach past the scope because the rows are
+  # nested, and nesting is not authorization.
+  test "the backlog tree shows nothing from another project" do
+    sign_in_as users(:one)
+
+    get project_url(projects(:apollo))
+
+    assert_no_match(/#{epics(:gemini_rendezvous).title}/, response.body)
+    assert_no_match(/#{stories(:gemini_docking).title}/, response.body)
+  end
+
+  # A project with no epics is the first thing a new team sees, so it says what
+  # to do rather than rendering an empty box.
+  test "the backlog tree offers an empty state when the project has no epics" do
+    sign_in_as users(:one)
+    projects(:apollo).epics.destroy_all
+
+    get project_url(projects(:apollo))
+
+    assert_response :success
+    assert_select "a[href=?]", new_project_epic_path(projects(:apollo))
+  end
+
+  private
+    def queries_for
+      count = 0
+      counter = ->(*, payload) { count += 1 unless payload[:name].in?([ "SCHEMA", "TRANSACTION" ]) }
+
+      ActiveSupport::Notifications.subscribed(counter, "sql.active_record") { yield }
+      count
+    end
 end

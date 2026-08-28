@@ -11,7 +11,11 @@ class ProjectsController < ApplicationController
     @projects = (@showing_archived ? scope.archived : scope.active).order(:name)
   end
 
+  # §7's key screen. Three levels in one eager-loaded query: the tree asks every
+  # row for its title, its assignee and its progress, and each of those is an
+  # N+1 waiting to happen on the screen with the most rows in the app.
   def show
+    @epics = policy_scope(@project.epics).includes(stories: [ :assignee, { tasks: :assignee } ])
   end
 
   def new

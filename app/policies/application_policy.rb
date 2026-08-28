@@ -63,7 +63,10 @@ class ApplicationPolicy
     def role
       return @role if defined?(@role)
 
-      @role = user && project&.persisted? ? user.memberships.find_by(project: project)&.role : nil
+      # Asked of the user rather than queried here: the backlog tree builds one
+      # policy per row, so each instance's own memoization would still be a
+      # query per row. User#membership_in caches across all of them.
+      @role = user&.membership_in(project)&.role
     end
 
     def member? = role.present?

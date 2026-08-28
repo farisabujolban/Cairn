@@ -1,0 +1,54 @@
+<%# One row of the tree, at any of the three levels. The levels differ only in
+    what hangs below them and how far in they sit, so they share one partial
+    rather than three that drift apart.
+
+    The disclosure button is a real button with aria-expanded, not a <details>
+    element. <details> would be free and accessible, but it puts everything in
+    the row inside the <summary>, where clicking the status select toggles the
+    branch instead of opening the select.
+
+    Rows with nothing under them get a spacer instead of a button: a disclosure
+    control that reveals nothing is a keyboard stop with no purpose. %>
+<% children_id = dom_id(record, :children) %>
+<li data-controller="<%= "disclosure" if children.any? %>">
+  <div class="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-slate-200 bg-white px-3 py-2 transition-colors hover:border-slate-300 focus-within:inset-ring-2 focus-within:inset-ring-slate-900">
+    <% if children.any? %>
+      <button type="button" aria-expanded="<%= expanded %>" aria-controls="<%= children_id %>"
+              data-disclosure-target="button" data-action="disclosure#toggle"
+              class="disclosure shrink-0 cursor-pointer rounded p-1 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900">
+        <span class="disclosure__marker block text-xs" aria-hidden="true">▶</span>
+        <span class="sr-only"><%= child_label %> in <%= record.title %></span>
+      </button>
+    <% else %>
+      <span class="w-6 shrink-0" aria-hidden="true"></span>
+    <% end %>
+
+    <%# min-w-0 and break-words so a long title wraps rather than pushing the
+        status control past the card border on a narrow viewport. %>
+    <div class="min-w-0 flex-1 basis-48 break-words">
+      <%= link_to record.title, [ project, record ],
+            class: "font-medium text-slate-900 transition-colors hover:text-slate-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" %>
+      <% if progress&.any? %>
+        <p class="text-xs text-slate-500"><%= progress %> <%= child_label.downcase %> done</p>
+      <% end %>
+    </div>
+
+    <% if record.try(:assignee) %>
+      <p class="shrink-0 text-xs text-slate-500"><%= record.assignee.name %></p>
+    <% end %>
+
+    <div class="shrink-0">
+      <%= render "shared/status_control", record: record, project: project %>
+    </div>
+  </div>
+
+  <% if children.any? %>
+    <%# The nesting is real: a list inside a list item, so assistive technology
+        reports the depth rather than leaving it to the indent. %>
+    <ul id="<%= children_id %>" <%= "hidden" unless expanded %>
+        class="mt-2 ml-3 space-y-2 border-l border-slate-200 pl-4"
+        data-disclosure-target="region">
+      <%= yield %>
+    </ul>
+  <% end %>
+</li>
