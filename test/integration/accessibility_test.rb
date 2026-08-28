@@ -66,6 +66,72 @@ class AccessibilityTest < ActionDispatch::IntegrationTest
     assert_select "main", count: 1
   end
 
+  # §7: validation errors are associated to their input via aria-describedby.
+  # Without the association a screen reader reads "Title, edit text, invalid"
+  # and never reaches the sentence saying what was actually wrong with it.
+  test "a validation error is tied to the input it belongs to" do
+    post project_epics_url(projects(:apollo)), params: { epic: { title: "", status: "backlog" } }
+
+    assert_response :unprocessable_content
+
+    input = css_select("#epic_title").sole
+    assert_equal "true", input["aria-invalid"]
+    assert_select "##{input["aria-describedby"]}", text: /can't be blank/i
+  end
+
+  # The wiring must appear only where there is something to announce: a
+  # describedby pointing at an element that was not rendered is a dangling
+  # reference, which some screen readers read as nothing at all.
+  test "a valid input carries no error wiring" do
+    get new_project_epic_url(projects(:apollo))
+
+    input = css_select("#epic_title").sole
+    assert_nil input["aria-describedby"]
+    assert_nil input["aria-invalid"]
+  end
+
+  # Every control needs a name, and a placeholder or a nearby heading is not
+  # one. Walked across every form screen rather than asserted per form, so a
+  # form added later is covered without anyone remembering to add a test.
+  test "every control on every project form is labelled" do
+    project = projects(:apollo)
+    epic = epics(:launch)
+
+    [ new_project_epic_path(project), edit_project_epic_path(project, epic),
+      new_project_milestone_path(project), edit_project_milestone_path(project, milestones(:v1)),
+      new_project_epic_story_path(project, epic), edit_project_story_path(project, stories(:countdown)),
+      new_project_story_task_path(project, stories(:countdown)), edit_project_task_path(project, tasks(:wire_the_clock)),
+      new_project_membership_path(project), project_memberships_path(project),
+      edit_project_path(project) ].each do |path|
+      get path
+
+      assert_response :success, "expected #{path} to render"
+      assert_empty unlabelled_controls, "#{path} has controls with no accessible name"
+    end
+  end
+
+  # The sign-in and password forms are the app's front door and were generated
+  # rather than written, so they are the likeliest to have been left out.
+  test "every control on the signed-out forms is labelled" do
+    sign_out
+
+    [ new_session_path, new_password_path ].each do |path|
+      get path
+
+      assert_response :success
+      assert_empty unlabelled_controls, "#{path} has controls with no accessible name"
+    end
+  end
+
+  test "every control on the new project form is labelled" do
+    sign_out
+    sign_in_as users(:admin)
+
+    get new_project_path
+
+    assert_empty unlabelled_controls
+  end
+
   # §7: "outline: none is forbidden." Removing the focus ring makes the app
   # unusable by keyboard while looking no different to a mouse — the kind of
   # regression nobody notices until somebody cannot work. Grepped rather than
@@ -91,4 +157,18 @@ class AccessibilityTest < ActionDispatch::IntegrationTest
     assert_match(/@media\s*\(prefers-reduced-motion:\s*reduce\)/, stylesheet)
     assert_match(/\*,\s*::before,\s*::after/, stylesheet)
   end
+
+  private
+    # A control is named by a <label for>, or by aria-label / aria-labelledby.
+    # Hidden inputs and buttons are excluded: buttons are named by their own
+    # text, and a hidden field is not announced at all.
+    def unlabelled_controls
+      labelled_ids = css_select("label[for]").map { |label| label["for"] }
+
+      css_select("input, select, textarea").reject { |control|
+        control["type"].in?(%w[ hidden submit button ]) ||
+          control["aria-label"].present? || control["aria-labelledby"].present? ||
+          labelled_ids.include?(control["id"])
+      }.map { |control| control["name"] || control["id"] || control.to_s }
+    end
 end

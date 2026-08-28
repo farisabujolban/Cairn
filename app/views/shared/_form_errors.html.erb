@@ -1,0 +1,22 @@
+<%# The summary an invalid form re-renders with. It counts rather than lists:
+    every message now appears beside the field it belongs to, and repeating them
+    here would have a screen reader read each one twice.
+
+    role="alert" is what makes it announced at all. The page has re-rendered
+    rather than navigated, and §7 deliberately leaves out aria-live for Turbo
+    updates, so without this nothing tells anyone the submission failed.
+
+    Errors on :base belong to no field, so they are the one thing that would go
+    unsaid if this only ever counted. %>
+<% if record.errors.any? %>
+  <div role="alert" class="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-800">
+    <p><%= pluralize(record.errors.count, "error") %> prevented this <%= name %> from being saved.</p>
+    <% if record.errors[:base].any? %>
+      <ul class="mt-2 list-disc pl-5">
+        <% record.errors[:base].each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    <% end %>
+  </div>
+<% end %>

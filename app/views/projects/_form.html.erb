@@ -1,24 +1,13 @@
 <%= form_with model: project, class: "mt-6 space-y-4" do |form| %>
-  <% if project.errors.any? %>
-    <div class="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-800">
-      <h2><%= pluralize(project.errors.count, "error") %> prevented this project from being saved:</h2>
-      <ul class="mt-2 list-disc pl-5">
-        <% project.errors.full_messages.each do |message| %>
-          <li><%= message %></li>
-        <% end %>
-      </ul>
-    </div>
+  <%= render "shared/form_errors", record: project, name: "project" %>
+
+  <%= render layout: "shared/field", locals: { form: form, attribute: :name } do |field| %>
+    <%= form.text_field :name, **field %>
   <% end %>
 
-  <div>
-    <%= form.label :name, class: "block text-sm font-medium text-slate-900" %>
-    <%= form.text_field :name, class: "mt-1 block w-full rounded-md border border-slate-300 px-3 py-2" %>
-  </div>
-
-  <div>
-    <%= form.label :description, class: "block text-sm font-medium text-slate-900" %>
-    <%= form.text_area :description, rows: 4, class: "mt-1 block w-full rounded-md border border-slate-300 px-3 py-2" %>
-  </div>
+  <%= render layout: "shared/field", locals: { form: form, attribute: :description } do |field| %>
+    <%= form.text_area :description, rows: 4, **field %>
+  <% end %>
 
   <div class="flex items-center gap-4">
     <%= form.submit class: "cursor-pointer rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900" %>

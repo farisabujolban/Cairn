@@ -15,6 +15,16 @@ module ApplicationHelper
     "Delete #{project.name}? This permanently destroys #{destroyed}. #{ending}"
   end
 
+  # One input style for every form in the app, so the focus ring §7 requires is
+  # not something each form has to remember separately — and so an invalid field
+  # reads as invalid to someone who cannot hear aria-invalid.
+  def field_classes(invalid: false)
+    class_names(
+      "block w-full rounded-md border px-3 py-2 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900",
+      "border-red-300 bg-red-50" => invalid,
+      "border-slate-300 bg-white" => !invalid)
+  end
+
   # Every back link is the same shape, so the arrow extends on hover everywhere.
   # The arrow is decoration: screen readers hear the label alone.
   def back_link_to(label, url)
