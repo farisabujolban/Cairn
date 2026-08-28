@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+#
+# Take a verified copy of a live SQLite database. SPEC.md §12.
+#
+#   script/backup_database <database> <backup-dir>
+#   KEEP=30 script/backup_database <database> <backup-dir>
+#
+# Runs on the server, against the bind-mounted storage directory that
+# config/deploy.yml gives the container. It deliberately does not go through
+# Docker or Kamal: a backup that needs the deploy tooling to be working is a
+# backup that stops running on the day the deploy tooling breaks.
+#
+# Copies land on the same disk first and are shipped off-box afterwards. That
+# order is on purpose — the copy has to exist before it can be sent anywhere,
+# and a failed upload should not also mean a failed backup.
+set -euo pipefail
+
+KEEP="${KEEP:-14}"
+
+usage() {
+  echo "usage: [KEEP=n] $(basename "$0") <database> <backup-dir>" >&2
+  exit 64
+}
+
+database="${1:-}"
+backup_dir="${2:-}"
+[ -n "$database" ] && [ -n "$backup_dir" ] || usage
+
+if [ ! -f "$database" ]; then
+  echo "$(basename "$0"): no database at $database" >&2
+  exit 1
+fi
+
+mkdir -p "$backup_dir"
+
+name="$(basename "$database" .sqlite3)"
+stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+final="$backup_dir/$name-$stamp.sqlite3"
+partial="$final.partial"
+
+# A copy that dies halfway through must not be left looking like a backup.
+trap 'rm -f "$partial"' EXIT
+
+# .backup rather than cp. The app is running and writing throughout: sqlite3's
+# backup API takes the same locks the app does and copies a consistent snapshot,
+# where cp of a file mid-write produces something that passes no check at all.
+# It works from outside the container because the bind mount is the same inode,
+# and SQLite's locks are held on the file rather than by the process.
+sqlite3 "$database" ".backup '$partial'"
+
+# Verified now, while there is still a working database to take another copy
+# from — rather than during a restore, which is the worst possible moment to
+# discover that the schedule has been writing rubbish for a month.
+check="$(sqlite3 "$partial" "PRAGMA integrity_check;" 2>&1)" || true
+if [ "$check" != "ok" ]; then
+  echo "$(basename "$0"): integrity check failed, refusing to keep this copy: $check" >&2
+  exit 1
+fi
+echo "integrity check: ok"
+
+mv "$partial" "$final"
+trap - EXIT
+echo "backed up $database to $final"
+
+# Prune oldest first. The timestamp is fixed-width and UTC, so sorting the names
+# sorts the copies, with no dependence on the mtimes an off-box sync may rewrite.
+printf '%s\n' "$backup_dir/$name-"*.sqlite3 | sort -r | tail -n "+$((KEEP + 1))" |
+  while IFS= read -r old; do
+    [ -e "$old" ] || continue
+    rm -f "$old"
+    echo "pruned $(basename "$old")"
+  done

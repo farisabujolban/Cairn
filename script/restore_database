@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+#
+# Put a backup back. SPEC.md §12 — "a backup nobody has restored is not a
+# backup", so this is a script that gets run rather than a paragraph that gets
+# read, and test/scripts/database_backup_test.rb runs it on every build.
+#
+#   script/restore_database --yes <backup-file> <database>
+#
+# Stop the app first. Replacing the file under a running server leaves open
+# connections holding a database that no longer exists:
+#
+#   bin/kamal app stop
+#   script/restore_database --yes /var/backups/project_tracker/production-….sqlite3 \
+#                                 /var/lib/project_tracker/storage/production.sqlite3
+#   bin/kamal app boot
+set -euo pipefail
+
+confirmed=no
+if [ "${1:-}" = "--yes" ]; then
+  confirmed=yes
+  shift
+fi
+
+usage() {
+  echo "usage: $(basename "$0") --yes <backup-file> <database>" >&2
+  exit 64
+}
+
+backup="${1:-}"
+database="${2:-}"
+[ -n "$backup" ] && [ -n "$database" ] || usage
+
+if [ ! -f "$backup" ]; then
+  echo "$(basename "$0"): no backup at $backup" >&2
+  exit 1
+fi
+
+# No interactive prompt, on purpose. This is run over SSH, in a hurry, from a
+# command someone half-remembers — and a prompt that can be answered by a
+# stray newline is not a guard. Naming the flag is the confirmation.
+if [ "$confirmed" != "yes" ]; then
+  echo "$(basename "$0"): this replaces $database with $backup." >&2
+  echo "Stop the app (bin/kamal app stop), then run again with --yes." >&2
+  exit 1
+fi
+
+# Before anything is moved. A restore that installs an unreadable backup over a
+# working database turns one problem into two, and the backup being sound is the
+# one assumption the whole procedure rests on.
+check="$(sqlite3 "$backup" "PRAGMA integrity_check;" 2>&1)" || true
+if [ "$check" != "ok" ]; then
+  echo "$(basename "$0"): the backup at $backup is not a sound database: $check" >&2
+  echo "The live database has not been touched. Try an earlier copy." >&2
+  exit 1
+fi
+echo "integrity check: ok"
+
+stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+aside="$database.replaced-$stamp"
+owner=""
+
+if [ -f "$database" ]; then
+  owner="$(ls -ln "$database" | awk '{ print $3 ":" $4 }')"
+
+  # Fold the write-ahead log into the database before setting it aside, so the
+  # copy being kept is whole. Best effort: if this database is damaged enough
+  # that a checkpoint fails, the restore is still the right thing to do.
+  sqlite3 "$database" "PRAGMA wal_checkpoint(TRUNCATE);" >/dev/null 2>&1 || true
+
+  mv "$database" "$aside"
+  echo "kept the database being replaced at $aside"
+fi
+
+# The bug that quietly eats a restore. SQLite replays a write-ahead log it finds
+# beside a database file, so a restored file with the *previous* -wal still next
+# to it is read as the previous database: the restore runs, reports success, and
+# changes nothing anyone can see.
+rm -f "$database-wal" "$database-shm"
+
+cp "$backup" "$database"
+
+# The app runs as uid 1000 inside the container. A restore run as root leaves a
+# root-owned file, and the app comes back up able to read it and not to write —
+# which looks like a mysterious application bug rather than a restore mistake.
+if [ -n "$owner" ]; then
+  chown "$owner" "$database" 2>/dev/null ||
+    echo "warning: could not set ownership to $owner — check it before starting the app" >&2
+fi
+
+echo "restored $database from $backup"
+echo "Start the app (bin/kamal app boot) and sign in before deleting $aside."

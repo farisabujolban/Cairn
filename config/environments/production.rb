@@ -24,14 +24,20 @@ Rails.application.configure do
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :local
 
-  # Assume all access to the app is happening through a SSL-terminating reverse proxy.
-  # config.assume_ssl = true
+  # Kamal's proxy terminates TLS and forwards to this container over plain http.
+  # Without this, force_ssl below sees an http request, redirects to https, and
+  # the proxy forwards the retry over http again — a redirect loop, not an
+  # insecure connection, which is why it is easy to misread.
+  config.assume_ssl = true
 
-  # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
-  # config.force_ssl = true
+  # §12. Also what turns on Strict-Transport-Security and the Secure cookie flag,
+  # so the session cookie stops being sent over plain http.
+  config.force_ssl = true
 
-  # Skip http-to-https redirect for the default health check endpoint.
-  # config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
+  # The proxy health-checks /up over http from inside the machine, before any
+  # certificate exists. Redirecting that check means the container never reports
+  # healthy and the deploy rolls back.
+  config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
 
   # Log to STDOUT with the current request id as a default log tag.
   config.log_tags = [ :request_id ]
@@ -79,12 +85,34 @@ Rails.application.configure do
   # Only use :id for inspections in production.
   config.active_record.attributes_for_inspect = [ :id ]
 
-  # Enable DNS rebinding protection and other `Host` header attacks.
-  # config.hosts = [
-  #   "example.com",     # Allow requests from example.com
-  #   /.*\.example\.com/ # Allow requests from subdomains like `www.example.com`
-  # ]
+  # §5: block DNS rebinding and other Host header attacks. Rails guards this in
+  # development and leaves the production list empty, so an unconfigured
+  # production app answers to whatever hostname is sent to it.
   #
-  # Skip DNS rebinding protection for the default health check endpoint.
-  # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+  # A missing APP_HOST therefore fails the boot rather than defaulting. Assigning
+  # an empty list would leave host authorization off with nothing in the log to
+  # say so, and a deploy that cannot serve is a better outcome than one that
+  # serves anybody's Host header.
+  #
+  # One host, not a list: it is the same hostname Kamal's proxy is configured
+  # with in config/deploy.yml, and one place to change it is worth more than the
+  # flexibility of several.
+  #
+  # The exception is the image build. The Dockerfile runs
+  # `bin/rails assets:precompile` under RAILS_ENV=production, which loads this
+  # file on a build machine that has no idea where the app will be served — and
+  # serves no requests either. Rails marks that build with SECRET_KEY_BASE_DUMMY.
+  unless ENV["SECRET_KEY_BASE_DUMMY"]
+    config.hosts = [
+      ENV.fetch("APP_HOST") do
+        raise "APP_HOST is not set. It must be the hostname this app is served " \
+              "as — the same one config/deploy.yml gives the proxy. Without it, " \
+              "host authorization is off and the app answers to any Host header."
+      end
+    ]
+
+    # The proxy health-checks /up from inside the machine, by container address,
+    # so that one request never carries the app's hostname.
+    config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+  end
 end

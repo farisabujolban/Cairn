@@ -13,17 +13,21 @@ class SecurityBaselineTest < ActionDispatch::IntegrationTest
     assert_equal "none", response.headers["X-Permitted-Cross-Domain-Policies"]
   end
 
-  # §5 and §13 phase 7. Report-only first: a broken directive then arrives as a
-  # report rather than a blank page, and there is still UI work in flight to fix
-  # what it surfaces. Phase 8 flips this to enforcing, and the flip is only safe
-  # if this phase leaves nothing to report.
-  test "a content security policy is sent in report-only mode" do
+  # §5 and §13. Phase 7 shipped this report-only so that a directive that was too
+  # strict arrived as a console report rather than a blank page. Phase 8 flips it
+  # to enforcing, which was only safe because test/system/content_security_policy_test.rb
+  # loads every screen in a real browser and fails on a single reported violation.
+  #
+  # Both headers are asserted. Report-only alongside an enforcing policy is not
+  # an error and browsers evaluate both, so a half-done flip that left the old
+  # line in place would otherwise pass.
+  test "the content security policy is enforcing, not report-only" do
     get new_session_path
 
-    assert_nil response.headers["Content-Security-Policy"],
-               "the policy must not be enforcing yet — §13 flips it in phase 8"
-    assert response.headers["Content-Security-Policy-Report-Only"].present?,
-           "no report-only policy is being sent"
+    assert response.headers["Content-Security-Policy"].present?,
+           "no enforcing policy is being sent"
+    assert_nil response.headers["Content-Security-Policy-Report-Only"],
+               "report-only was left on alongside the enforcing policy"
   end
 
   # The directives that carry the weight. object-src none kills plugin embedding
@@ -31,7 +35,7 @@ class SecurityBaselineTest < ActionDispatch::IntegrationTest
   # injected <script> must not run even if it reaches the page.
   test "the policy locks down scripts, objects and framing" do
     get new_session_path
-    policy = response.headers["Content-Security-Policy-Report-Only"]
+    policy = response.headers["Content-Security-Policy"]
 
     assert_includes policy, "object-src 'none'"
     assert_includes policy, "frame-ancestors 'none'"
@@ -47,7 +51,7 @@ class SecurityBaselineTest < ActionDispatch::IntegrationTest
   # first request.
   test "inline scripts carry a nonce that the policy names" do
     get new_session_path
-    policy = response.headers["Content-Security-Policy-Report-Only"]
+    policy = response.headers["Content-Security-Policy"]
 
     nonces = response.body.scan(/<script[^>]*\snonce="([^"]+)"/).flatten
     assert_operator nonces.size, :>=, 2, "importmap's inline scripts are not nonced"
