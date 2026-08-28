@@ -5,6 +5,11 @@ class Project < ApplicationRecord
   has_many :users, through: :memberships
   has_many :milestones, dependent: :destroy
   has_many :epics, dependent: :destroy
+  # Reached through the epics rather than stored again. Containment already
+  # answers which project a story or task is in, and a second answer could
+  # disagree with the first. No dependent: here — the epics already cascade.
+  has_many :stories, through: :epics
+  has_many :tasks, through: :stories
 
   normalizes :name, with: ->(n) { n.strip }
 
@@ -37,6 +42,20 @@ class Project < ApplicationRecord
 
   def restore!
     update!(archived_at: nil)
+  end
+
+  # What a delete takes with the project, for the confirmation that has to name
+  # the cascade rather than ask "are you sure?". Levels that are empty are left
+  # out: "0 tasks" is noise in a sentence someone is reading to decide whether
+  # to stop.
+  def contents
+    {
+      "epic" => epics.count,
+      "story" => stories.count,
+      "task" => tasks.count,
+      "milestone" => milestones.count,
+      "member" => memberships.count
+    }.reject { |_level, count| count.zero? }
   end
 
   # The only sanctioned way past the one-owner rule. Both halves run in one

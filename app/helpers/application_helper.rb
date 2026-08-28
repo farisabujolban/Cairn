@@ -1,4 +1,20 @@
 module ApplicationHelper
+  # The delete confirmation, per §13 phase 5: it names the cascade instead of
+  # asking "are you sure?". Deleting a project reaches four levels down plus the
+  # roster, and the person deciding has one screen of that in front of them at
+  # most.
+  #
+  # Each level is pluralized on its own count rather than the sentence being
+  # pluralized as a whole, so one epic and four stories does not read "1 epics".
+  def deletion_warning(project)
+    contents = project.contents
+    ending = "This cannot be undone."
+    return "Delete #{project.name}? #{ending}" if contents.empty?
+
+    destroyed = contents.map { |level, count| pluralize(count, level) }.to_sentence
+    "Delete #{project.name}? This permanently destroys #{destroyed}. #{ending}"
+  end
+
   # Every back link is the same shape, so the arrow extends on hover everywhere.
   # The arrow is decoration: screen readers hear the label alone.
   def back_link_to(label, url)
