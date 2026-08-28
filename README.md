@@ -34,19 +34,40 @@ You need Ruby and a terminal. There is no Docker, no database server to install,
 and nothing else to start alongside it — the database is a single file.
 
 ```sh
-bin/setup    # installs everything and prepares the database
-bin/dev      # starts the app
+bin/setup         # installs everything and prepares the database
+bin/rails db:seed # fills it with example data you can sign in to
+bin/dev           # starts the app
 ```
 
 Then open **http://localhost:3000** in a browser.
 
 To stop it, press `Ctrl+C` in the terminal.
 
-## Creating the first user
+## Looking around
+
+`bin/rails db:seed` creates a handful of example people and two projects with a
+real backlog in them, then prints the addresses it made. Sign in as any of them
+with the password **`development-password`**:
+
+| Address | What they are |
+|---|---|
+| `admin@example.com` | System admin — the only one who can create projects |
+| `dana@example.com` | Owner of one project, admin of the other |
+| `kim@example.com` | An ordinary member |
+| `alex@example.com` | A viewer — reads everything, changes nothing |
+
+Signing in as each of them is the quickest way to see what the roles actually
+do. Running the command again is safe: it tops up what is missing and changes
+nothing that is already there.
+
+These accounts are for looking around on your own machine. They all share one
+password that is published in this file, so the seed command **refuses to run on
+a real server** — see below for how to start one of those.
+
+## Starting a real one
 
 There is no public sign-up page, on purpose: this is a tool for one team, not a
-service strangers join. That means the very first account has to be made from
-the terminal.
+service strangers join. So the first real account is made from the terminal.
 
 **1.** With the app set up, start the Rails console:
 
