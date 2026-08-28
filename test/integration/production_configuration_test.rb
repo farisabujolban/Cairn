@@ -1,5 +1,6 @@
 require "test_helper"
 require "json"
+require "open3"
 
 # §5 and §12 turn on force_ssl, `config.hosts` and an enforcing CSP. Every one of
 # those lives in config/environments/production.rb, which **no other test in this
@@ -57,16 +58,59 @@ class ProductionConfigurationTest < ActiveSupport::TestCase
            "every real page must redirect to https"
   end
 
+  # §5: Rails guards the Host header in development and leaves the production
+  # list empty, so an unconfigured production app answers to any hostname sent
+  # to it.
+  test "production answers only to the host it was deployed as" do
+    config = production_config("APP_HOST" => "tracker.example.com")
+
+    assert_equal [ "tracker.example.com" ], config["hosts"]
+  end
+
+  test "the host check skips the health check" do
+    assert production_config["host_check_skips_up"],
+           "the proxy health-checks /up by IP, so that request never carries the app's hostname"
+  end
+
+  # The failure this guards against is not a wrong APP_HOST, it is no APP_HOST:
+  # config.hosts would be assigned an empty list and host authorization would be
+  # off, with nothing in the log to say so. A deploy that cannot serve is a
+  # better outcome than one that serves anybody's Host header.
+  test "production refuses to boot without a host" do
+    _out, err, status = boot_production({})
+
+    assert_not_predicate status, :success?, "production booted with no APP_HOST"
+    assert_match(/APP_HOST/, err)
+  end
+
+  # The Dockerfile runs bin/rails assets:precompile under RAILS_ENV=production,
+  # which loads this same file on a build machine that has no idea where the app
+  # will eventually be served. Rails marks that build with SECRET_KEY_BASE_DUMMY.
+  # Without this exemption the image cannot be built at all.
+  test "the image build boots production without a host" do
+    config = production_config("SECRET_KEY_BASE_DUMMY" => "1", "APP_HOST" => nil)
+
+    assert_empty config["hosts"], "an asset build must not pin a hostname it cannot know"
+  end
+
   private
+    # APP_HOST is supplied by every caller that expects a booted app, because
+    # production refuses to boot without one. The tests about that refusal call
+    # boot_production directly.
     def production_config(env = {})
-      @@boots[env] ||= JSON.parse(boot_production(env)[/^PROBE(\{.*\})$/, 1])
+      env = { "APP_HOST" => "tracker.example.com" }.merge(env)
+
+      @@boots[env] ||= begin
+        out, err, status = boot_production(env)
+        assert_predicate status, :success?, "production would not boot:\n#{err}"
+        JSON.parse(out[/^PROBE(\{.*\})$/, 1])
+      end
     end
 
     def boot_production(env)
-      IO.popen(
+      Open3.capture3(
         env.merge("RAILS_ENV" => "production", "SECRET_KEY_BASE" => "boot-probe-only"),
-        [ Rails.root.join("bin/rails").to_s, "runner", PROBE ],
-        err: File::NULL, &:read
+        Rails.root.join("bin/rails").to_s, "runner", PROBE
       )
     end
 end
