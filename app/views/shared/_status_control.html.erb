@@ -25,7 +25,7 @@
       <%= form.label :status, "Status for #{record.title}", for: field_id, class: "sr-only" %>
       <%= form.select :status, WorkItemStatus::STATUSES.map { |status| [ status.titleize, status ] }, {},
             id: field_id,
-            class: "rounded-md border border-slate-300 bg-white px-2 py-1 text-sm text-slate-700 transition-colors hover:border-slate-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900",
+            class: "w-full min-w-0 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm text-slate-700 transition-colors hover:border-slate-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900",
             data: { action: "change->autosubmit#submit" } %>
       <noscript>
         <%= form.submit "Save", class: "cursor-pointer rounded-md border border-slate-300 px-2 py-1 text-sm font-medium text-slate-700" %>

@@ -21,7 +21,7 @@
           <p class="mt-1 text-sm text-slate-600"><%= membership.user.email_address %></p>
         </div>
 
-        <div class="flex shrink-0 flex-wrap items-center gap-2">
+        <div class="flex min-w-0 flex-wrap items-center gap-2">
           <% if policy(membership).update? %>
             <%= form_with model: [ @project, membership ], method: :patch, class: "flex items-center gap-2" do |form| %>
               <%# The visible column heading is the person's name, so the select

@@ -16,6 +16,12 @@ class NarrowViewportTest < ApplicationSystemTestCase
   # was found. Chrome clamps its *window* far above this, so the viewport is set
   # through CDP; resize_to would silently give a much wider page and prove
   # nothing.
+  #
+  # 200 is the assertion, but the layout is kept working at 150. An element's
+  # intrinsic minimum width depends on the font, and CI's fonts are wider than
+  # macOS's — the backlog tree passed this locally and overflowed by 12px on
+  # Linux. Headroom, not the exact number, is what makes this test mean the same
+  # thing on both.
   NARROW_WIDTH = 200
 
   setup do

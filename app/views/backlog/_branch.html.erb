@@ -34,10 +34,14 @@
     </div>
 
     <% if record.try(:assignee) %>
-      <p class="shrink-0 text-xs text-slate-500"><%= record.assignee.name %></p>
+      <p class="min-w-0 break-words text-xs text-slate-500"><%= record.assignee.name %></p>
     <% end %>
 
-    <div class="shrink-0">
+    <%# Not shrink-0. A <select> will not shrink below its widest option, and
+        that width depends on the font — which differs between a developer's
+        machine and CI, so this overflowed on Linux while measuring fine on
+        macOS. min-w-0 here and w-full on the select let it narrow instead. %>
+    <div class="min-w-0">
       <%= render "shared/status_control", record: record, project: project %>
     </div>
   </div>

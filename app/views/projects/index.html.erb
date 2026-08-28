@@ -15,7 +15,7 @@
       very screen it disappears from. aria-current marks which half is showing,
       because "this tab is selected" is otherwise carried by colour alone. %>
   <nav class="mt-6" aria-label="Project status">
-    <ul class="inline-flex gap-1 rounded-md border border-slate-200 bg-white p-1 text-sm">
+    <ul class="inline-flex flex-wrap gap-1 rounded-md border border-slate-200 bg-white p-1 text-sm">
       <% [ [ "Active", nil ], [ "Archived", "archived" ] ].each do |label, status| %>
         <% showing = status.present? == @showing_archived %>
         <li>
