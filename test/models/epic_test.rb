@@ -112,4 +112,21 @@ class EpicTest < ActiveSupport::TestCase
 
     assert_equal [ stories(:countdown), stories(:abort_switch) ], epic.stories.to_a
   end
+  # The backlog tree eager-loads three levels and then asks every row for its
+  # progress. Counting that in SQL would be two further queries per row — the
+  # exact N+1 the eager load exists to prevent — so an association that is
+  # already in memory is counted in memory.
+  test "progress counts an already-loaded association without querying again" do
+    epic = Epic.includes(:stories).find(epics(:launch).id)
+
+    assert_no_queries do
+      assert_equal Progress.new(done: 0, total: 2), epic.progress
+    end
+  end
+
+  # The unloaded path still counts in SQL: a detail page asking one epic for its
+  # progress must not drag every story into memory to answer.
+  test "progress counts an unloaded association in the database" do
+    assert_equal Progress.new(done: 0, total: 2), epics(:launch).progress
+  end
 end
