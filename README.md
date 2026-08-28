@@ -20,8 +20,8 @@ of one project and a viewer of another.
 
 | Role | Can do |
 |---|---|
-| **Owner** | Everything, including handing the project on to someone else. One per project. |
-| **Admin** | Everything except handing the project on. Can add and remove people. |
+| **Owner** | Everything, including deleting the project and handing it to someone else. One per project. |
+| **Admin** | Everything except those two. Can add and remove people, and archive the project. |
 | **Member** | Create and change epics, stories, tasks and milestones. Cannot manage people. |
 | **Viewer** | Read everything. Change nothing. |
 
@@ -95,6 +95,36 @@ later, or removes them from the project.
 Everyone on a project can see the member list — knowing who to ask about a piece
 of work is ordinary use. Only owners and admins can change it.
 
+## Working through the backlog
+
+Opening a project shows its backlog: every epic, with its stories underneath,
+and each story's tasks under those. It is the one screen that shows the whole
+shape of a project at once, and the one you would leave open all day.
+
+Epics open with their stories showing. Tasks stay folded until you ask for them
+— use the arrow beside a story. The arrow beside an epic folds the whole thing
+away while you work on something else.
+
+Every row's status can be changed on the spot, without opening the item first.
+Pick a new one and it saves straight away. Nothing else on the page moves, so
+anything you had unfolded stays unfolded.
+
+The five statuses are **Backlog**, **Todo**, **In progress**, **Blocked** and
+**Done**, and they mean whatever your team decides. None of it is automatic: a
+story does not become done when its last task does. Somebody says so.
+
+The progress under an epic or a story counts what is done beneath it, so you can
+see how far along something is without unfolding it.
+
+## Using it from the keyboard
+
+Everything works without a mouse. Pressing Tab on any page offers **Skip to main
+content** first, which jumps past the navigation to the page itself. Whatever
+has the keyboard's attention is always outlined, and every button and menu says
+what it is to a screen reader.
+
+If your computer is set to reduce motion, the app stops animating.
+
 ## Handing a project to someone else
 
 A project has exactly one owner, and only the owner can pass it on. On the
@@ -105,6 +135,23 @@ or none.
 This is the only way the owner changes. An owner cannot simply demote
 themselves, because that would leave a project nobody can transfer or delete,
 and an admin cannot demote the owner to take it from them.
+
+## Putting a project away
+
+A finished project does not have to sit in your list forever. **Archive** it
+from the project page and it moves out of the way. The **Archived** tab above
+the project list is where it goes, and **Restore** brings it straight back —
+nothing is lost, and the epics, stories, tasks and people are exactly as you
+left them.
+
+Owners and admins can archive, and the reason they can is that it is always
+reversible.
+
+**Delete** is not reversible, and only the owner has it. Deleting a project
+destroys everything inside it: every epic, story, task and milestone, and the
+record of who was on it. The confirmation counts all of that up before you
+agree to it, so you can see the size of what you are about to lose. If you only
+want the project out of your way, archive it instead.
 
 ## Versions, as installed
 
