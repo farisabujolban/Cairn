@@ -1,17 +1,17 @@
 # Name of your application. Used to uniquely configure containers.
 service: project_tracker
 
-# Name of the container image (use your-user/app-name on external registries).
-image: project_tracker
+# Name of the container image. On ghcr.io this is <github-user>/<image>.
+image: your-github-user/project_tracker
 
 # Deploy to these servers.
+#
+# One VPS (§12). 203.0.113.10 is a documentation address and is not a server:
+# replace it with the IP of yours, and see README.md for what has to exist on it
+# before the first deploy.
 servers:
   web:
-    - 192.168.0.1
-  # job:
-  #   hosts:
-  #     - 192.168.0.1
-  #   cmd: bin/jobs
+    - 203.0.113.10
 
 # Enable SSL auto certification via Let's Encrypt and allow for multiple apps on a single web server.
 # If used with Cloudflare, set encryption mode in SSL/TLS setting to "Full" to enable CF-to-app encryption.
@@ -20,27 +20,40 @@ servers:
 #
 # Don't use this when deploying to multiple web servers (then you have to terminate SSL at your load balancer).
 #
-# proxy:
-#   ssl: true
-#   host: app.example.com
+# Let's Encrypt terminates TLS here and forwards to the container over plain
+# http inside the machine. production.rb pairs with this: assume_ssl, so the app
+# knows the original request was https, and force_ssl, so anything arriving over
+# http is redirected.
+#
+# `host` must be the same hostname as APP_HOST below. If they differ the proxy
+# routes a name config.hosts rejects, and every page is a 403 with a healthy
+# container and a valid certificate. A test asserts they match.
+proxy:
+  ssl: true
+  host: tracker.example.com
 
 # Where you keep your container images.
 registry:
-  # Alternatives: hub.docker.com / registry.digitalocean.com / ghcr.io / ...
-  server: localhost:5555
+  # ghcr.io because the repository is already on GitHub and phase 9 pushes the
+  # image from Actions, where the token is issued to the workflow rather than
+  # stored. Any registry works; this one is one fewer account.
+  server: ghcr.io
+  username: your-github-user
 
-  # Needed for authenticated registries.
-  # username: your-user
-
-  # Always use an access token rather than real password when possible.
-  # password:
-  #   - KAMAL_REGISTRY_PASSWORD
+  # An access token, never a password. See .kamal/secrets.
+  password:
+    - KAMAL_REGISTRY_PASSWORD
 
 # Inject ENV variables into containers (secrets come from .kamal/secrets).
 env:
   secret:
     - RAILS_MASTER_KEY
   clear:
+    # The hostname this app is served as. production.rb raises without it rather
+    # than leaving host authorization off, so this is not optional — and it must
+    # match proxy.host above.
+    APP_HOST: tracker.example.com
+
     # Run the Solid Queue Supervisor inside the web server's Puma process to do jobs.
     # When you start using multiple servers, you should split out job processing to a dedicated machine.
     SOLID_QUEUE_IN_PUMA: true
@@ -66,10 +79,23 @@ aliases:
   logs: app logs -f
   dbc: app exec --interactive --reuse "bin/rails dbconsole --include-password"
 
-# Use a persistent storage volume for sqlite database files and local Active Storage files.
-# Recommended to change this to a mounted volume path that is backed up off server.
+# §12: "a container redeploy without it silently destroys every project, epic,
+# story, and task." The SQLite databases live in /rails/storage, so this mount is
+# the only thing that outlives a container.
+#
+# A host path rather than a Docker named volume, deliberately.
+# script/backup_database runs on the server as an ordinary process and opens the
+# database file directly — which is what lets SQLite's locks work while the app
+# keeps writing. A named volume is reachable only through Docker, and the backup
+# would then depend on the deploy tooling being healthy on the day it is needed
+# most.
+#
+# The directory must exist and belong to uid 1000 before the first deploy: that
+# is the user the container runs as, and Docker creates a missing bind mount as
+# root. The app then starts, reads fine, and fails on the first write. README.md
+# has the two commands.
 volumes:
-  - "project_tracker_storage:/rails/storage"
+  - "/var/lib/project_tracker/storage:/rails/storage"
 
 # Bridge fingerprinted assets, like JS and CSS, between versions to avoid
 # hitting 404 on in-flight requests. Combines all files from new and old
