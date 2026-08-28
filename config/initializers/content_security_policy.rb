@@ -1,12 +1,17 @@
 # Be sure to restart your server when you modify this file.
 
-# §5's CSP, rolled out report-only in phase 7 and flipped to enforcing in phase 8.
+# §5's CSP. Rolled out report-only in phase 7 and enforcing since phase 8.
 #
-# Report-only first is deliberate: a directive that is too strict arrives as a
-# console report rather than as a blank page, and phase 7 still has UI work in
-# flight to fix whatever it surfaces. The flip in phase 8 is only safe because
-# this phase leaves nothing to report — test/system/content_security_policy_test.rb
-# loads every screen and fails if the browser reports a single violation.
+# Report-only first was deliberate: a directive that is too strict arrives as a
+# console report rather than as a blank page, and phase 7 still had UI work in
+# flight to fix whatever it surfaced. The flip was only safe because nothing was
+# left reporting — test/system/content_security_policy_test.rb loads every screen
+# in a real browser and fails if it reports a single violation.
+#
+# That test is what keeps this enforcing safely, and it is why a new screen is
+# not finished until it has been added to the list there. Under enforcement a
+# violation is no longer a line in a console: it is a script that does not run
+# or a stylesheet that does not apply, on a page that otherwise looks fine.
 Rails.application.configure do
   config.content_security_policy do |policy|
     policy.default_src :self
@@ -60,7 +65,4 @@ Rails.application.configure do
   # layout renders; without style-src here that nonce is not valid for a style
   # element, and every page reports a style-src-elem violation.
   config.content_security_policy_nonce_directives = %w[ script-src style-src ]
-
-  # Report, do not block. Phase 8 removes this line.
-  config.content_security_policy_report_only = true
 end

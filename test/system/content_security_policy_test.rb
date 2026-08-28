@@ -1,14 +1,19 @@
 require "application_system_test_case"
 
-# The policy ships report-only in phase 7 and is flipped to enforcing in phase 8
-# (§5, §13). That flip is only safe if nothing is currently being reported — a
-# violation that is merely logged today becomes a blocked script, a missing
-# stylesheet or an unstyled page the moment enforcement is on.
+# The policy shipped report-only in phase 7 and is enforcing since phase 8 (§5,
+# §13). This test is what made that flip safe, and it is what keeps enforcement
+# safe now: a violation is no longer a line in a console, it is a script that
+# does not run or a stylesheet that does not apply, on a page that otherwise
+# looks finished.
 #
-# Report-only is exactly what makes this testable: the browser still evaluates
-# the policy and still fires securitypolicyviolation, it just does not block. So
-# every screen is loaded and every violation the browser raises is collected.
-# Nothing here can pass by the policy being too permissive to notice.
+# It works the same under either mode, because the browser fires
+# securitypolicyviolation whether or not it also blocks. Every screen is loaded
+# and every violation the browser raises is collected, so nothing here can pass
+# by the policy being too permissive to notice.
+#
+# **A new screen is not finished until it is in the list below.** This is the
+# only thing standing between an enforcing policy and a page that renders
+# without its behaviour.
 class ContentSecurityPolicyTest < ApplicationSystemTestCase
   setup do
     capture_violations_on_every_page
@@ -37,8 +42,9 @@ class ContentSecurityPolicyTest < ApplicationSystemTestCase
 
     violations = screens.flat_map { |name, path| violations_on(name, path) }
 
-    assert_empty violations, "the policy is being violated, so phase 8 cannot " \
-                             "flip it to enforcing:\n  #{violations.join("\n  ")}"
+    assert_empty violations, "the policy is enforcing, so each of these is " \
+                             "something the browser refused to load or run:\n  " \
+                             "#{violations.join("\n  ")}"
   end
 
   # The progress bar sets its width from a percentage only known at render time,
