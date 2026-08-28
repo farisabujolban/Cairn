@@ -1,4 +1,4 @@
-# Project Tracker — Build Specification
+# Cairn — Build Specification
 
 This document is the source of truth for this project. Read it fully before writing any code, and
 re-read it at the start of every phase.

@@ -10,8 +10,8 @@
 # connections holding a database that no longer exists:
 #
 #   bin/kamal app stop
-#   script/restore_database --yes /var/backups/project_tracker/production-….sqlite3 \
-#                                 /var/lib/project_tracker/storage/production.sqlite3
+#   script/restore_database --yes /var/backups/cairn/production-….sqlite3 \
+#                                 /var/lib/cairn/storage/production.sqlite3
 #   bin/kamal app boot
 set -euo pipefail
 

@@ -1,4 +1,4 @@
-# Project Tracker
+# Cairn
 
 A lightweight issue tracker for a single team.
 
@@ -211,8 +211,8 @@ else, and why backups come before the first deploy rather than after.
 **2. Make the directory the database will live in.** On the server, as root:
 
 ```sh
-mkdir -p /var/lib/project_tracker/storage
-chown -R 1000:1000 /var/lib/project_tracker
+mkdir -p /var/lib/cairn/storage
+chown -R 1000:1000 /var/lib/cairn
 ```
 
 Do not skip the second line. The application runs as user 1000 inside its
@@ -244,10 +244,10 @@ above with `system_admin: true`. That account can then create the others.
 Nothing above backs anything up. Set this up on the first day, not the day you
 need it.
 
-On the server, as root, add this to `/etc/cron.d/project_tracker`:
+On the server, as root, add this to `/etc/cron.d/cairn`:
 
 ```
-0 * * * * root /usr/local/bin/backup_database /var/lib/project_tracker/storage/production.sqlite3 /var/backups/project_tracker
+0 * * * * root /usr/local/bin/backup_database /var/lib/cairn/storage/production.sqlite3 /var/backups/cairn
 ```
 
 `script/backup_database` and `script/restore_database` from this project are the
@@ -263,7 +263,7 @@ app rebuilds by itself.
 **Those copies are on the same disk as the thing they are protecting**, which
 protects you from a bad migration and not from a dead server. Send them
 somewhere else as well — any hourly `rsync` or `rclone` of
-`/var/backups/project_tracker` to storage you own elsewhere will do.
+`/var/backups/cairn` to storage you own elsewhere will do.
 
 ### Getting it back
 
@@ -279,8 +279,8 @@ Then on the server:
 
 ```sh
 /usr/local/bin/restore_database --yes \
-  /var/backups/project_tracker/production-20260828T140000Z.sqlite3 \
-  /var/lib/project_tracker/storage/production.sqlite3
+  /var/backups/cairn/production-20260828T140000Z.sqlite3 \
+  /var/lib/cairn/storage/production.sqlite3
 ```
 
 Then, from your machine again:
@@ -300,7 +300,7 @@ Two commands, and the order is the whole point:
 
 ```sh
 ssh root@your-server /usr/local/bin/backup_database \
-  /var/lib/project_tracker/storage/production.sqlite3 /var/backups/project_tracker
+  /var/lib/cairn/storage/production.sqlite3 /var/backups/cairn
 bin/kamal deploy
 ```
 
