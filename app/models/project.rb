@@ -4,7 +4,11 @@ class Project < ApplicationRecord
   has_many :memberships, dependent: :destroy
   has_many :users, through: :memberships
   has_many :milestones, dependent: :destroy
-  has_many :epics, dependent: :destroy
+  # Ordered here rather than at each call site: position is the only meaningful
+  # order for epics under a project, and the backlog tree renders three levels from
+  # one eager-loaded query — it cannot call .ordered on a loaded association
+  # without re-querying every row it just fetched.
+  has_many :epics, -> { ordered }, dependent: :destroy
   # Reached through the epics rather than stored again. Containment already
   # answers which project a story or task is in, and a second answer could
   # disagree with the first. No dependent: here — the epics already cascade.

@@ -103,4 +103,13 @@ class EpicTest < ActiveSupport::TestCase
 
     assert_equal [ epics(:launch), epics(:telemetry) ], ordered
   end
+  # The backlog tree renders three levels from one eager-loaded query, so it
+  # cannot call .ordered on a loaded association without re-querying every row.
+  # Position order is the only meaningful order for stories under an epic, so it
+  # belongs on the association rather than being remembered at each call site.
+  test "stories come back in position order without being asked" do
+    epic = epics(:launch)
+
+    assert_equal [ stories(:countdown), stories(:abort_switch) ], epic.stories.to_a
+  end
 end

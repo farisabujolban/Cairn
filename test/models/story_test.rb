@@ -140,4 +140,11 @@ class StoryTest < ActiveSupport::TestCase
 
     assert_nil story.reload.milestone_id
   end
+  # Same reason as Epic#stories: the tree loads tasks eagerly and must not
+  # re-query to put them in order.
+  test "tasks come back in position order without being asked" do
+    story = stories(:countdown)
+
+    assert_equal [ tasks(:wire_the_clock), tasks(:hold_at_t_minus) ], story.tasks.to_a
+  end
 end

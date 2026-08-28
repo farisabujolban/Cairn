@@ -5,7 +5,11 @@ class Story < ApplicationRecord
 
   belongs_to :epic
   belongs_to :milestone, optional: true
-  has_many :tasks, dependent: :destroy
+  # Ordered here rather than at each call site: position is the only meaningful
+  # order for tasks under a story, and the backlog tree renders three levels from
+  # one eager-loaded query — it cannot call .ordered on a loaded association
+  # without re-querying every row it just fetched.
+  has_many :tasks, -> { ordered }, dependent: :destroy
 
   # Done tasks over total tasks. A story at 100% is still only done when someone
   # says so: §3 rules out rollup in v1.
