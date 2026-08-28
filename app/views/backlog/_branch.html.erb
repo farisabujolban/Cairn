@@ -10,7 +10,7 @@
     Rows with nothing under them get a spacer instead of a button: a disclosure
     control that reveals nothing is a keyboard stop with no purpose. %>
 <% children_id = dom_id(record, :children) %>
-<li data-controller="<%= "disclosure" if children.any? %>">
+<li <%= tag.attributes(data: { controller: "disclosure" }) if children.any? %>>
   <div class="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-slate-200 bg-white px-3 py-2 transition-colors hover:border-slate-300 focus-within:inset-ring-2 focus-within:inset-ring-slate-900">
     <% if children.any? %>
       <button type="button" aria-expanded="<%= expanded %>" aria-controls="<%= children_id %>"

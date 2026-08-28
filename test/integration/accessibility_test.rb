@@ -132,6 +132,22 @@ class AccessibilityTest < ActionDispatch::IntegrationTest
     assert_empty unlabelled_controls
   end
 
+  # The tree renders one status control per row, and Rails derives a field's id
+  # from the model name alone — so every epic's select came out as "epic_status"
+  # and every sr-only label pointed at the first of them. A screen reader would
+  # announce forty controls as "Status for Launch sequence", and clicking any
+  # label would focus the wrong row.
+  test "every status control in the tree has an id of its own" do
+    get project_url(projects(:apollo))
+
+    ids = css_select("select").map { |select| select["id"] }
+
+    assert_operator ids.length, :>, 1, "expected the tree to render several status controls"
+    assert_equal ids.uniq, ids, "two status controls share an id"
+    assert_equal ids.sort, css_select("label[for]").map { |label| label["for"] }.sort,
+                 "a label points at something other than its own control"
+  end
+
   # §7: "outline: none is forbidden." Removing the focus ring makes the app
   # unusable by keyboard while looking no different to a mouse — the kind of
   # regression nobody notices until somebody cannot work. Grepped rather than

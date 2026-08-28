@@ -15,9 +15,16 @@
     <%= form_with model: record, url: [ project, record ], method: :patch,
           data: { controller: "autosubmit" }, class: "flex items-center gap-1" do |form| %>
       <%# The visible heading of this row is the record's title, so the select
-          needs a name of its own for anyone not reading the row visually. %>
-      <%= form.label :status, "Status for #{record.title}", class: "sr-only" %>
+          needs a name of its own for anyone not reading the row visually.
+
+          The id has to be spelled out. Rails derives one from the model name
+          alone — "epic_status" — and the tree renders one of these per row, so
+          the default would put the same id on every select on the page and
+          point every label at the first of them. %>
+      <% field_id = dom_id(record, :status_field) %>
+      <%= form.label :status, "Status for #{record.title}", for: field_id, class: "sr-only" %>
       <%= form.select :status, WorkItemStatus::STATUSES.map { |status| [ status.titleize, status ] }, {},
+            id: field_id,
             class: "rounded-md border border-slate-300 bg-white px-2 py-1 text-sm text-slate-700 transition-colors hover:border-slate-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900",
             data: { action: "change->autosubmit#submit" } %>
       <noscript>
