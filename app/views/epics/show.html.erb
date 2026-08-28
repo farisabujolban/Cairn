@@ -10,7 +10,7 @@
           role check, so the two can diverge later without the view lying. %>
       <% if policy(@epic).edit? %>
         <%= link_to "Edit", edit_project_epic_path(@project, @epic),
-              class: "rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100" %>
+              class: "rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900" %>
       <% end %>
       <% if policy(@epic).destroy? %>
         <%= button_to "Delete", project_epic_path(@project, @epic), method: :delete,
@@ -29,7 +29,7 @@
       <dt class="font-medium text-slate-900">Milestone</dt>
       <dd>
         <% if @epic.milestone %>
-          <%= link_to @epic.milestone.title, project_milestone_path(@project, @epic.milestone), class: "font-medium text-slate-900 transition-colors hover:text-slate-600" %>
+          <%= link_to @epic.milestone.title, project_milestone_path(@project, @epic.milestone), class: "font-medium text-slate-900 transition-colors hover:text-slate-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900" %>
         <% else %>
           Unscheduled
         <% end %>

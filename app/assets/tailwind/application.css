@@ -22,6 +22,28 @@
 }
 
 /*
+ * Turbo's navigation progress bar (§7).
+ *
+ * Turbo already creates and drives `.turbo-progress-bar` on every navigation
+ * that outlasts its delay, so this styles what the framework provides rather
+ * than adding a spinner system beside it. §7 is explicit about that: do not
+ * build one.
+ *
+ * Pinned above everything, including the back-to-top button, because it
+ * describes the whole page. It inherits the reduced-motion rule below like
+ * anything else that animates.
+ */
+.turbo-progress-bar {
+  height: 3px;
+  background: linear-gradient(
+    to right,
+    var(--color-slate-900, #0f172a),
+    var(--color-slate-500, #64748b)
+  );
+  z-index: 60;
+}
+
+/*
  * The backlog tree's disclosure marker. It points right when the branch is
  * closed and down when it is open, so the row says which way it is without
  * needing two icons. Rotation rather than a swap keeps the two states
@@ -55,3 +77,36 @@
     scroll-behavior: auto !important;
   }
 }
+
+/*
+ * The progress bar's fill width.
+ *
+ * This was a style="width: 42%" attribute, which CSP governs through
+ * style-src-attr — and §5 rules out unsafe-inline, so the attribute had to go
+ * rather than the policy being widened for it. The width is selected by a data
+ * attribute instead, in 5% steps.
+ *
+ * Five percent is invisible on a bar two pixels high, and the exact counts are
+ * spelled out in the sentence beside it, which is the bar's accessible name.
+ */
+.progress-fill { width: 0; }
+.progress-fill[data-percent="5"] { width: 5%; }
+.progress-fill[data-percent="10"] { width: 10%; }
+.progress-fill[data-percent="15"] { width: 15%; }
+.progress-fill[data-percent="20"] { width: 20%; }
+.progress-fill[data-percent="25"] { width: 25%; }
+.progress-fill[data-percent="30"] { width: 30%; }
+.progress-fill[data-percent="35"] { width: 35%; }
+.progress-fill[data-percent="40"] { width: 40%; }
+.progress-fill[data-percent="45"] { width: 45%; }
+.progress-fill[data-percent="50"] { width: 50%; }
+.progress-fill[data-percent="55"] { width: 55%; }
+.progress-fill[data-percent="60"] { width: 60%; }
+.progress-fill[data-percent="65"] { width: 65%; }
+.progress-fill[data-percent="70"] { width: 70%; }
+.progress-fill[data-percent="75"] { width: 75%; }
+.progress-fill[data-percent="80"] { width: 80%; }
+.progress-fill[data-percent="85"] { width: 85%; }
+.progress-fill[data-percent="90"] { width: 90%; }
+.progress-fill[data-percent="95"] { width: 95%; }
+.progress-fill[data-percent="100"] { width: 100%; }

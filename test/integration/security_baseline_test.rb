@@ -13,6 +13,62 @@ class SecurityBaselineTest < ActionDispatch::IntegrationTest
     assert_equal "none", response.headers["X-Permitted-Cross-Domain-Policies"]
   end
 
+  # §5 and §13 phase 7. Report-only first: a broken directive then arrives as a
+  # report rather than a blank page, and there is still UI work in flight to fix
+  # what it surfaces. Phase 8 flips this to enforcing, and the flip is only safe
+  # if this phase leaves nothing to report.
+  test "a content security policy is sent in report-only mode" do
+    get new_session_path
+
+    assert_nil response.headers["Content-Security-Policy"],
+               "the policy must not be enforcing yet — §13 flips it in phase 8"
+    assert response.headers["Content-Security-Policy-Report-Only"].present?,
+           "no report-only policy is being sent"
+  end
+
+  # The directives that carry the weight. object-src none kills plugin embedding
+  # outright, and script-src without unsafe-inline is the whole point — an
+  # injected <script> must not run even if it reaches the page.
+  test "the policy locks down scripts, objects and framing" do
+    get new_session_path
+    policy = response.headers["Content-Security-Policy-Report-Only"]
+
+    assert_includes policy, "object-src 'none'"
+    assert_includes policy, "frame-ancestors 'none'"
+    assert_includes policy, "base-uri 'self'"
+    assert_no_match(/script-src[^;]*'unsafe-inline'/, policy,
+                    "unsafe-inline in script-src would defeat the policy")
+    assert_no_match(/script-src[^;]*'unsafe-eval'/, policy)
+  end
+
+  # §5 requires nonces rather than unsafe-inline. importmap-rails emits two
+  # inline scripts on every page — the importmap itself and the module that
+  # boots the app — so without a nonce the app violates its own policy on the
+  # first request.
+  test "inline scripts carry a nonce that the policy names" do
+    get new_session_path
+    policy = response.headers["Content-Security-Policy-Report-Only"]
+
+    nonces = response.body.scan(/<script[^>]*\snonce="([^"]+)"/).flatten
+    assert_operator nonces.size, :>=, 2, "importmap's inline scripts are not nonced"
+    assert_equal 1, nonces.uniq.size, "one nonce per request, not one per tag"
+    assert_includes policy, "'nonce-#{nonces.first}'"
+  end
+
+  # A nonce that repeats is a nonce that stored markup can carry. Asserted on the
+  # signed-out page because that is where a session-id-derived nonce renders
+  # empty — the failure this replaced.
+  test "the nonce is different on every response" do
+    get new_session_path
+    first = response.body[/<script[^>]*\snonce="([^"]+)"/, 1]
+
+    get new_session_path
+    second = response.body[/<script[^>]*\snonce="([^"]+)"/, 1]
+
+    assert first.present?, "no nonce on the signed-out page"
+    assert_not_equal first, second, "the nonce is stable across requests"
+  end
+
   # The realistic CSRF failure mode is not forgetting to enable protection, it is
   # disabling it to unblock a form and never restoring it. This fails the moment
   # skip_forgery_protection appears anywhere in the codebase.

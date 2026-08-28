@@ -342,7 +342,8 @@ everywhere else in v1.
   shows `.turbo-progress-bar` automatically on navigation. Do not write a spinner system that
   duplicates what the framework provides.
 - **Hover and focus states** — part of the Tailwind work, not a separately tracked feature.
-- **Empty states** for a project with no epics and a search with no results.
+- **Empty states** for a project with no epics. (The search-with-no-results empty state goes with
+  the deferred search feature — see §8.)
 
 ### Accessibility — build these inline with the templates
 
@@ -372,7 +373,27 @@ would collide visually with Turbo's own top-pinned progress bar.
 
 ---
 
-## 8. Site search
+## 8. Site search — DEFERRED OUT OF v1
+
+> **Not built. See §14 for the decision and the trigger that reverses it.**
+>
+> This section is kept in full rather than deleted, because the hazard below is
+> the most valuable paragraph in it and would otherwise have to be re-derived
+> by whoever picks the feature up.
+>
+> **First step when it is picked up, before any of the below:** switch
+> `config.active_record.schema_format` to `:sql`. Rails' schema dumper cannot
+> represent an FTS5 virtual table or a trigger, so `db/schema.rb` would silently
+> omit both — and everything that builds a database from the schema rather than
+> by replaying migrations would get one with no search index. That is
+> `bin/setup`'s `db:prepare` and all three `db:test:prepare` calls in CI. Search
+> would work in development and be absent in test, where a leak test asserting
+> "no results from another project" would pass against an index that does not
+> exist.
+>
+> The migration must also **backfill** the index. Triggers fire on future writes
+> only, so the table starts empty and existing rows are invisible until inserted
+> explicitly.
 
 A real feature with a real hazard, not a polish item.
 
@@ -670,8 +691,17 @@ valid, and then **stops for human review before the next phase begins.**
    `resources :projects` already routes `DELETE` to a `destroy` action that does not exist, so
    that URL currently renders 404. Building the screen closes it.
 
-6. **Site search.** FTS5 table, search UI, results grouped by type. **Write the cross-project leak
-   test from §8 first**, before any query code exists.
+6. **Site search — DEFERRED, not built.** FTS5 table, search UI, results grouped by type. Kept in
+   the numbering rather than removed, so that §§5, 12 and 13's references to phases 7, 8 and 9 keep
+   pointing at the same phases they always did.
+
+   Deferred because **Phase 5 took most of its value**. Search's job was finding what you could not
+   navigate to, and until the backlog tree existed, reaching a task took five navigations with no
+   way to see two epics at once. The tree puts a whole project on one screen. Nothing in phases 7
+   to 9 depends on search, and the §1 delivery target is a deployed team app — three phases stood
+   between here and that.
+
+   See §8 for the implementation and its hazard, and §14 for the trigger that reverses this.
 
 7. **Seeds & polish.** Seed data using generic placeholder users, Tailwind polish, back-to-top
    button, empty states, styled `.turbo-progress-bar`, README. Enable **CSP in report-only mode** —
@@ -716,6 +746,20 @@ These are conclusions, not omissions. They are recorded so they are not silently
 
 - **`axe-core` in system tests.** Would make accessibility regressions fail CI.
   **Trigger:** taking on the full accessibility pass.
+
+- **Site search (§8).** Deferred, not abandoned — §8 is kept in full. The backlog tree in Phase 5
+  answers most of what search was for: a whole project on one screen, where reaching a task
+  previously took five navigations. Building it would have delayed a deployable app by a phase for
+  a feature the tree had already blunted.
+
+  **Trigger:** a backlog outgrowing the tree — someone scrolling or collapsing branches to find an
+  item they already know exists — or a second person asking for search. Both are observable, which
+  is what separates a trigger from a good intention.
+
+  **Cost of waiting, so it is chosen rather than discovered:** the schema-format flip in §8 becomes
+  a repo-wide change made while a live database exists, and the index backfill runs once against
+  real data as part of a deploy rather than against an empty development database. Phase 8's
+  pre-migration backup and verified restore is what makes that recoverable.
 
 - **Argon2id password hashing.** See §5. **Trigger:** a requirement that mandates it — at which
   point migrate by rehashing on next successful login, so users move over without a forced reset.
