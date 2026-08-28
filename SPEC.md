@@ -277,8 +277,9 @@ Here, the correct action is the opposite.
   (`content_security_policy_nonce_generator`). Hotwire supports this, and `tailwindcss-rails`
   compiles to a real stylesheet so **no `unsafe-inline` is needed**.
 
-  Roll out **report-only first** (Phase 7), then flip to enforcing before the Phase 8 deploy, so a
-  broken directive surfaces as a report rather than a blank page.
+  Roll out **report-only first** (Phase 7), then flip to enforcing in Phase 8, so a broken
+  directive surfaces as a report rather than a blank page. Both are done; the flip does not depend
+  on the deploy and was not deferred with it.
 
 - **`config.hosts`** set in production, blocking Host-header attacks. Rails only guards this in
   development by default.
@@ -618,6 +619,10 @@ The ordering is deliberate: **Phase 8 deploys manually** and verifies a restore;
 automates the exact sequence already proven by hand.** Automating an unproven deploy means
 debugging the app and the pipeline simultaneously, with no way to tell which is at fault.
 
+**That precondition is currently unmet.** Phase 8 built and tested everything in this section but
+did not run a deploy — see §14. This paragraph is the reason Phase 9 is deferred rather than
+attempted anyway: the pipeline it would automate is a sequence nobody has performed.
+
 The pipeline, in order — the backup step is not optional:
 
 ```text
@@ -641,7 +646,10 @@ credentials, and `RAILS_MASTER_KEY`. This means **a compromised GitHub account r
 production server.** Use a deploy-only SSH key, not a personal one.
 
 **Rollback** is `kamal rollback` for code. A database rollback is the restore procedure above —
-which is why Phase 8 requires actually testing it.
+which is why Phase 8 requires actually testing it. `script/restore_database` is exercised on every
+build by `test/deployment/database_backup_test.rb`, against a real SQLite database in WAL mode.
+That proves the mechanics and not the operator: running the drill once on the real server is still
+the first thing the deploy owes, and §14 records it as owed.
 
 ---
 
@@ -707,13 +715,40 @@ valid, and then **stops for human review before the next phase begins.**
    button, empty states, styled `.turbo-progress-bar`, README. Enable **CSP in report-only mode** —
    early enough that violations surface while there is still UI work in flight to fix them.
 
-8. **Hardening, then manual deploy.** Flip CSP from report-only to enforcing. Set `config.hosts`,
-   `force_ssl`; confirm `filter_parameters`. Then Kamal config, persistent volume, backups, first
-   real deploy, and a **restore actually performed and verified**, not merely documented.
+8. **Hardening — done. Manual deploy — DEFERRED, not built.** Flip CSP from report-only to
+   enforcing. Set `config.hosts`, `force_ssl`; confirm `filter_parameters`. Then Kamal config,
+   persistent volume, backups, first real deploy, and a **restore actually performed and
+   verified**, not merely documented.
 
-9. **CD.** Automate exactly the Phase 8 sequence: build on merge to `main`, GitHub Environment
-   approval gate, pre-migration backup, `kamal deploy`. Verify by shipping one trivial change (a
-   README line) through the full pipeline end to end.
+   **The hardening half shipped in full** and does not depend on a server: CSP enforcing,
+   `force_ssl` with `assume_ssl` and the `/up` exclusion, `config.hosts` bound to `APP_HOST` with
+   production refusing to boot without one, `filter_parameters` confirmed. All of it is asserted by
+   `test/deployment/production_configuration_test.rb`, which boots the production environment in a
+   subprocess and reads the settings back — because nothing else in the suite loads
+   `config/environments/production.rb`, so a mistake in that file used to pass every test.
+
+   **Everything the deploy needs shipped too, and has not been run.** Kamal configured for one VPS
+   with a host-path storage volume, `script/backup_database` and `script/restore_database`, and the
+   full sequence in the README. What is missing is the part that cannot live in a repository: a
+   server, and a restore performed on it.
+
+   Deferred because **the project's purpose changed and the document should say so rather than
+   leave an item looking unfinished.** This was built to learn Rails and is being released as open
+   source; a permanently-running VPS with real accounts is an operations commitment with no
+   learning left in it after the first successful deploy. See §14 for the trigger that reverses
+   this, and what it costs to wait.
+
+   Note that §1 is unchanged and deliberately so. This is still a multi-user app whose
+   authorization is load-bearing, and every UI decision still follows from that. It has not been
+   deployed; it was not built as something else.
+
+9. **CD — DEFERRED, and dependent on 8.** Automate exactly the Phase 8 sequence: build on merge to
+   `main`, GitHub Environment approval gate, pre-migration backup, `kamal deploy`. Verify by
+   shipping one trivial change (a README line) through the full pipeline end to end.
+
+   Deferred because §12 says why in its own words: automating a deploy nobody has performed means
+   debugging the app and the pipeline at once, with no way to tell which is at fault. There is no
+   sequence to automate yet. **This unblocks the moment phase 8's deploy is done, and not before.**
 
 ---
 
@@ -759,7 +794,31 @@ These are conclusions, not omissions. They are recorded so they are not silently
   **Cost of waiting, so it is chosen rather than discovered:** the schema-format flip in §8 becomes
   a repo-wide change made while a live database exists, and the index backfill runs once against
   real data as part of a deploy rather than against an empty development database. Phase 8's
-  pre-migration backup and verified restore is what makes that recoverable.
+  pre-migration backup and restore procedure is what makes that recoverable — which is one more
+  reason the drill below is owed before search is ever built on a live server.
+
+- **Deploying it (§12, §13 phases 8 and 9).** The configuration, the scripts and the documented
+  sequence all exist and are tested; no server has ever run them. This project was built to learn
+  Rails, and it is being released as open source rather than operated. A VPS with real accounts on
+  the public internet is an ongoing security commitment — an unpatched machine three months from
+  now — and there is no Rails left to learn in it after the first successful deploy and one
+  restore.
+
+  What is genuinely lost by not deploying, stated plainly rather than waved away: **the four
+  production behaviours that only exist in production.** Whether Let's Encrypt issues the
+  certificate, whether `assume_ssl` actually breaks the redirect loop it was written for, whether
+  the CSP survives assets served by Thruster instead of the dev server, and whether the bind mount
+  is writable by uid 1000. `test/deployment/` asserts that the configuration says the right thing.
+  Nothing in a repository can assert that the right thing happens.
+
+  **Trigger:** anyone other than the author needing to use it — one teammate, one real backlog. At
+  that point the sequence in the README is the whole task, and the first thing after it is the
+  restore drill, not the second.
+
+  **Cost of waiting:** none that accrues. The configuration does not rot; the backup scripts are
+  run by the test suite on every build, which is what stops them rotting quietly. Phase 9 is
+  blocked and stays blocked, and that is correct rather than unfortunate — §12 is explicit that
+  automating an unperformed deploy means debugging the app and the pipeline at once.
 
 - **Argon2id password hashing.** See §5. **Trigger:** a requirement that mandates it — at which
   point migrate by rehashing on next successful login, so users move over without a forced reset.

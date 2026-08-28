@@ -181,7 +181,13 @@ want the project out of your way, archive it instead.
 
 ## Putting it on a server
 
-Everything above works on one computer. This is how the team gets to it.
+Everything above works on one computer. This is how a team gets to it.
+
+**Nobody has run this yet.** This app has only ever run on a laptop. The
+configuration is in the repository and the backup and restore scripts are
+exercised by the test suite on every build, so the pieces are known to work —
+but the first person to follow this section will be the first person to follow
+it. Expect to hit something. `SPEC.md` §14 explains why it was left this way.
 
 You need three things: a small Linux server with a public address, a domain name
 pointed at that address, and somewhere to keep the built application — a
