@@ -148,6 +148,22 @@ class AccessibilityTest < ActionDispatch::IntegrationTest
                  "a label points at something other than its own control"
   end
 
+  # §7: "style Turbo's existing progress bar. Do not build one." Turbo already
+  # shows .turbo-progress-bar on navigation, and the failure mode this guards is
+  # someone adding a spinner system beside it that duplicates the framework.
+  test "loading indication is Turbo's progress bar, not a second one" do
+    stylesheet = File.read(Rails.root.join("app/assets/tailwind/application.css"))
+
+    assert_match(/\.turbo-progress-bar\s*\{/, stylesheet,
+                 "Turbo's progress bar is unstyled, so navigation shows the browser default")
+
+    homegrown = Dir[Rails.root.join("app/javascript/**/*.js")].select do |path|
+      File.read(path).match?(/spinner|loading[-_ ]?(bar|indicator)/i)
+    end
+    assert_empty homegrown.map { |p| p.delete_prefix("#{Rails.root}/") },
+                 "§7 forbids building a loading indicator beside Turbo's"
+  end
+
   # §7: "outline: none is forbidden." Removing the focus ring makes the app
   # unusable by keyboard while looking no different to a mouse — the kind of
   # regression nobody notices until somebody cannot work. Grepped rather than
