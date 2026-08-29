@@ -42,6 +42,7 @@
 /SUGGESTIONS.md
 /TestsToAdd.md
 
-# The prompt this project was started from: a record for the author, not
-# something a reader of the finished repository needs.
+# Working documents that stay on this machine: the prompt this build started
+# from, and the specification it was built against.
 /KICKOFF.md
+/SPEC.md
