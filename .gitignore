@@ -41,3 +41,8 @@
 /NEXT-STEPS.md
 /SUGGESTIONS.md
 /TestsToAdd.md
+
+# Working documents that stay on this machine: the prompt this build started
+# from, and the specification it was built against.
+/KICKOFF.md
+/SPEC.md

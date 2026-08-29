@@ -1,17 +1,43 @@
 # Cairn
 
-A lightweight issue tracker for a single team.
+An issue tracker for a team, built around one idea: work sits in three levels,
+and never more.
 
-Work is organised in three levels, and only three. A **project** holds **epics**
-— large pieces of work. Each epic holds **stories**, which describe something a
-person actually wants. Each story holds **tasks**, the individual steps. Tasks
-are the bottom: they never contain anything else.
+- [What Cairn is](#what-cairn-is)
+- [Who can do what](#who-can-do-what)
+- [Running it on your own machine](#running-it-on-your-own-machine)
+- [Looking around](#looking-around)
+- [Creating accounts](#creating-accounts)
+- [Working through the backlog](#working-through-the-backlog)
+- [Using it from the keyboard](#using-it-from-the-keyboard)
+- [Handing a project to someone else](#handing-a-project-to-someone-else)
+- [Putting a project away](#putting-a-project-away)
+- [Versions, as installed](#versions-as-installed)
+- [License](#license)
+
+## What Cairn is
+
+A **project** holds **epics** — large pieces of work. Each epic holds
+**stories**, which describe something a person actually wants. Each story holds
+**tasks**, the individual steps. Tasks are the bottom: they never contain
+anything else.
+
+That limit is the whole design. There is no way to nest a task inside a task,
+so nobody has to decide how deep something belongs, and a project can never
+turn into a tree nobody can read. Three levels is enough to say what is being
+built, why, and what is left.
 
 Separately from that, **milestones** group work by ship date, so "what is going
-out in v1.2?" is a question the tool can answer directly.
+out in v1.2?" is a question the tool can answer directly. A milestone is a label
+work points at, not another level of the tree — an epic belongs to one, or to
+none.
+
+Nothing in Cairn happens on its own. A story does not become done when its last
+task does, and nothing is assigned, escalated or closed by a rule somebody set
+up months ago. A person says so, and the tool records it.
 
 It is deliberately not a Jira clone. The goal is the smallest tool that tracks
-real work.
+real work — and so far it has only run on a laptop, not on a server.
 
 ## Who can do what
 
@@ -30,10 +56,12 @@ appear in their list, and opening its address directly tells them nothing.
 
 ## Running it on your own machine
 
-You need Ruby and a terminal. There is no Docker, no database server to install,
-and nothing else to start alongside it — the database is a single file.
+You need Ruby 4.0.5 and a terminal. There is no Docker, no database server to
+install, and nothing else to start alongside it — the database is a single file.
 
 ```sh
+git clone https://github.com/farisabujolban/Cairn.git
+cd Cairn
 bin/setup         # installs everything and prepares the database
 bin/rails db:seed # fills it with example data you can sign in to
 bin/dev           # starts the app
@@ -61,23 +89,20 @@ do. Running the command again is safe: it tops up what is missing and changes
 nothing that is already there.
 
 These accounts are for looking around on your own machine. They all share one
-password that is published in this file, so the seed command **refuses to run on
-a real server** — see below for how to start one of those.
+password that is published in this file, which is why the seed command refuses
+to run anywhere but here.
 
-## Starting a real one
+## Creating accounts
 
-There is no public sign-up page, on purpose: this is a tool for one team, not a
-service strangers join. So the first real account is made from the terminal.
+There is no public sign-up page, on purpose: this is a tool for your team, not a
+service strangers join. Accounts are made from the console, and the first one
+is made by you.
 
 **1.** With the app set up, start the Rails console:
 
 ```sh
 bin/rails console
 ```
-
-On a deployed server the same console is `bin/kamal console`, run from a copy
-of this project on your own machine. Everything below is identical once you are
-in it.
 
 **2.** Paste this in, changing the name, email and password to your own. Use a
 long password — this account can create every other account.
@@ -91,19 +116,15 @@ User.create!(
 )
 ```
 
-**3.** Type `exit` to leave the console, then sign in with the email and
-password you just used — at http://localhost:3000 on your own machine, or at
-your own address on a server.
+**3.** Type `exit` to leave the console, then sign in at
+http://localhost:3000 with the email and password you just used.
 
 `system_admin: true` is what lets this account create projects and other
 accounts. It is not a master key: it grants no access to any project the account
 is not a member of.
 
-## Adding your teammates
-
-Everyone needs an account before they can be added to anything, and accounts are
-made the same way as the first one — from `bin/rails console`, without
-`system_admin`:
+Everyone else needs an account before they can be added to anything, and those
+are made the same way, without `system_admin`:
 
 ```ruby
 User.create!(
@@ -136,8 +157,7 @@ Pick a new one and it saves straight away. Nothing else on the page moves, so
 anything you had unfolded stays unfolded.
 
 The five statuses are **Backlog**, **Todo**, **In progress**, **Blocked** and
-**Done**, and they mean whatever your team decides. None of it is automatic: a
-story does not become done when its last task does. Somebody says so.
+**Done**, and they mean whatever your team decides.
 
 The progress under an epic or a story counts what is done beneath it, so you can
 see how far along something is without unfolding it.
@@ -179,140 +199,6 @@ record of who was on it. The confirmation counts all of that up before you
 agree to it, so you can see the size of what you are about to lose. If you only
 want the project out of your way, archive it instead.
 
-## Putting it on a server
-
-Everything above works on one computer. This is how a team gets to it.
-
-**Nobody has run this yet.** This app has only ever run on a laptop. The
-configuration is in the repository and the backup and restore scripts are
-exercised by the test suite on every build, so the pieces are known to work —
-but the first person to follow this section will be the first person to follow
-it. Expect to hit something. `SPEC.md` §14 explains why it was left this way.
-
-You need three things: a small Linux server with a public address, a domain name
-pointed at that address, and somewhere to keep the built application — a
-container registry. The instructions below use GitHub's, because the code is
-already there.
-
-The database is a single file on that server. That fact shapes everything in
-this section: it is why the storage directory is set up by hand before anything
-else, and why backups come before the first deploy rather than after.
-
-### Before the first deploy
-
-**1. Fill in the four placeholders.** Open `config/deploy.yml` and replace:
-
-| Placeholder | With |
-|---|---|
-| `203.0.113.10` | your server's address |
-| `tracker.example.com` (twice) | your domain — both places, they must match |
-| `your-github-user` (twice) | your GitHub username |
-
-**2. Make the directory the database will live in.** On the server, as root:
-
-```sh
-mkdir -p /var/lib/cairn/storage
-chown -R 1000:1000 /var/lib/cairn
-```
-
-Do not skip the second line. The application runs as user 1000 inside its
-container, and a directory left owned by root gives you an app that starts,
-shows every page, and fails the moment anyone saves anything.
-
-**3. Have your registry token ready.** On your own machine:
-
-```sh
-export KAMAL_REGISTRY_PASSWORD=<a GitHub token with write:packages>
-```
-
-**4. Then, from this project on your own machine:**
-
-```sh
-bin/kamal setup
-```
-
-That installs what the server needs, builds the application, sends it over,
-gets a certificate for your domain, and starts it. It takes a few minutes the
-first time. When it finishes, your domain works.
-
-**5. Make the first account.** There is no sign-up page, so the first account is
-made from the console — `bin/kamal console`, then the same `User.create!` as
-above with `system_admin: true`. That account can then create the others.
-
-### Backing it up
-
-Nothing above backs anything up. Set this up on the first day, not the day you
-need it.
-
-On the server, as root, add this to `/etc/cron.d/cairn`:
-
-```
-0 * * * * root /usr/local/bin/backup_database /var/lib/cairn/storage/production.sqlite3 /var/backups/cairn
-```
-
-`script/backup_database` and `script/restore_database` from this project are the
-two files to copy to `/usr/local/bin/` on the server. They need `sqlite3` there
-(`apt install sqlite3`) and nothing else — deliberately not Docker or Kamal, so
-that a backup still runs on a day when the deploy tooling does not.
-
-It takes a copy every hour without stopping the app, checks that the copy is a
-readable database before keeping it, and keeps the last fourteen. Only
-`production.sqlite3` is worth copying — the other files beside it are caches the
-app rebuilds by itself.
-
-**Those copies are on the same disk as the thing they are protecting**, which
-protects you from a bad migration and not from a dead server. Send them
-somewhere else as well — any hourly `rsync` or `rclone` of
-`/var/backups/cairn` to storage you own elsewhere will do.
-
-### Getting it back
-
-Do this once now, on purpose, while nothing is wrong. A backup nobody has
-restored is not a backup, and the afternoon you find that out is not the
-afternoon you want to find it out.
-
-```sh
-bin/kamal app stop
-```
-
-Then on the server:
-
-```sh
-/usr/local/bin/restore_database --yes \
-  /var/backups/cairn/production-20260828T140000Z.sqlite3 \
-  /var/lib/cairn/storage/production.sqlite3
-```
-
-Then, from your machine again:
-
-```sh
-bin/kamal app boot
-```
-
-Sign in and look at a project before you call it done. The script checks the
-backup before it touches anything, keeps the database it replaced beside the new
-one, and refuses to run without `--yes` — but the only proof that a restore
-worked is a page with your work on it.
-
-### Deploying a change
-
-Two commands, and the order is the whole point:
-
-```sh
-ssh root@your-server /usr/local/bin/backup_database \
-  /var/lib/cairn/storage/production.sqlite3 /var/backups/cairn
-bin/kamal deploy
-```
-
-A new version applies any database changes it brings as it starts, and there is
-no undo for that. Going back means putting a copy of the file back — the
-procedure above — so the copy has to have been taken. The hourly schedule means
-the worst case is an hour of work rather than all of it, and a backup taken
-seconds earlier costs nothing.
-
-If a deploy goes wrong and the database was not part of it, `bin/kamal rollback`
-puts the previous version back.
-
 ## Versions, as installed
 
 | | |
@@ -324,27 +210,6 @@ puts the previous version back.
 | CSS | Tailwind via `tailwindcss-rails` |
 | Authorization | Pundit — one policy class per model |
 | Tests | Minitest + fixtures, Capybara for system tests |
-
-## Tests
-
-```sh
-bin/rails test         # models, controllers, integration
-bin/rails test:system  # browser tests
-bin/ci                 # everything CI runs, in one pass
-```
-
-Every check in `.github/workflows/ci.yml` is blocking, including Brakeman,
-`bundler-audit`, `importmap audit`, and `script/check_test_coverage.rb`, which
-fails the build when a model, controller, policy or helper has no test file.
-
-## For developers
-
-`SPEC.md` is the source of truth for every decision in this codebase — stack,
-domain model, authorization, security. Read it before changing anything.
-
-If `rails` on your `PATH` resolves to Apple's stub at `/usr/bin/rails`, add the
-gem bindir (`ruby -e 'puts Gem.bindir'`) ahead of `/usr/bin` in your shell
-profile. Inside the project, `bin/rails` already resolves correctly.
 
 ## License
 
